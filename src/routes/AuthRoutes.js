@@ -4,6 +4,7 @@ import ChangePasswordPage from '../pages/ChangePasswordPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import MainRoutes from './MainRoutes';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,7 @@ const AuthRoutes = () => {
       <Stack.Screen name="Register" component={RegisterPage} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordPage} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordPage} />
+      <Stack.Screen name="Main" component={MainRoutes} />
     </Stack.Navigator>
   );
 };
