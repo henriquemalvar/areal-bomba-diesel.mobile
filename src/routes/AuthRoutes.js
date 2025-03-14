@@ -11,7 +11,9 @@ const Stack = createStackNavigator();
 const AuthRoutes = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Login" component={LoginPage} />
+      <Stack.Screen name="Login" component={LoginPage}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="Register" component={RegisterPage} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordPage} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordPage} />
