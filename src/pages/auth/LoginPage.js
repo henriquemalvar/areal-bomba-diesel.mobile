@@ -1,5 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,9 +13,7 @@ const loginSchema = z.object({
 
 export default function LoginScreen() {
   const navigation = useNavigation();
-  const { control, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
+  const { control, handleSubmit, formState: { errors } } = useForm();
   const [showPassword, setShowPassword] = React.useState(false);
 
   const handleLogin = async (data) => {

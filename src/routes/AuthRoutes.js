@@ -1,9 +1,9 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import ChangePasswordPage from '../pages/ChangePasswordPage';
-import ForgotPasswordPage from '../pages/ForgotPasswordPage';
-import LoginPage from '../pages/LoginPage';
-import RegisterPage from '../pages/RegisterPage';
+import ChangePasswordPage from '../pages/auth/ChangePasswordPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
 import MainRoutes from './MainRoutes';
 
 const Stack = createStackNavigator();
