@@ -14,10 +14,16 @@ const AuthRoutes = () => {
       <Stack.Screen name="Login" component={LoginPage}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="Register" component={RegisterPage} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordPage} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordPage} />
-      <Stack.Screen name="Main" component={MainRoutes} />
+      <Stack.Screen
+        name="Register"
+        component={RegisterPage}
+        options={{ headerShown: true, headerTitle: 'Cadastro' }}
+      />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordPage} 
+      options={{ headerShown: true, headerTitle: 'Recuperar Senha' }} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordPage} 
+      options={{ headerShown: true, headerTitle: 'Alterar Senha' }} />
+      <Stack.Screen name="Main" component={MainRoutes} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };
