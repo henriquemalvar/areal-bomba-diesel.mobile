@@ -1,10 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function ProfilePage() {
+export default function EditProfilePage() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Perfil</Text>
+      <Text style={styles.text}>Editar Perfil</Text>
     </View>
   );
 }
