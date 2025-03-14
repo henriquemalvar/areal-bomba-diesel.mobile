@@ -1,15 +1,24 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import { z } from 'zod';
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('E-mail inválido'),
+});
 
 export default function ForgotPasswordPage() {
   const navigation = useNavigation();
-  const [email, setEmail] = useState('');
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
 
-  const handleResetPassword = async () => {
+  const handleResetPassword = async (data) => {
     toast.success('Instruções de recuperação de senha enviadas!');
     navigation.navigate('Login');
   };
@@ -27,17 +36,25 @@ export default function ForgotPasswordPage() {
 
         <View style={styles.inputContainer}>
           <MaterialIcons name="email" size={24} color="#666" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="E-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="E-mail"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            )}
           />
         </View>
+        {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
-        <TouchableOpacity style={styles.resetButton} onPress={handleResetPassword}>
+        <TouchableOpacity style={styles.resetButton} onPress={handleSubmit(handleResetPassword)}>
           <Text style={styles.resetButtonText}>Resetar Senha</Text>
         </TouchableOpacity>
 
@@ -101,6 +118,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+  },
+  errorText: {
+    color: 'red',
+    alignSelf: 'flex-start',
+    marginBottom: 10,
   },
   resetButton: {
     backgroundColor: '#2196F3',
