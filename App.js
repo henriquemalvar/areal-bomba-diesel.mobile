@@ -9,11 +9,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <FeedbackProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <FeedbackProvider>
             <Routes />
-          </AuthProvider>
-        </FeedbackProvider>
+          </FeedbackProvider>
+        </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
