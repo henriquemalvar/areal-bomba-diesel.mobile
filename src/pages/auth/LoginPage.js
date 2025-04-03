@@ -7,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
+import { useFeedback } from '../../components/FeedbackProvider';
 import { useAuth } from '../../contexts/AuthContext';
 
 const loginSchema = z.object({
@@ -17,6 +18,7 @@ const loginSchema = z.object({
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { signIn } = useAuth();
+  const { showError, showSuccess } = useFeedback();
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
   });
@@ -28,16 +30,10 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setDebugInfo(null);
-      const response = await signIn(data.email, data.password);
-
-      if (__DEV__) {
-        setDebugInfo({
-          success: true,
-          user: response.user,
-          timestamp: new Date().toISOString(),
-        });
-      }
+      await signIn(data.email, data.password);
+      showSuccess('Login realizado', 'Bem-vindo de volta!');
     } catch (error) {
+      showError('Erro no login', error.message);
       if (__DEV__) {
         setDebugInfo({
           success: false,
