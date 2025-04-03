@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -19,6 +20,7 @@ export default function EditProfilePage() {
   const navigation = useNavigation();
   const { user, updateProfile } = useAuth();
   const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(editProfileSchema),
     defaultValues: {
       nome: user?.nome || '',
       email: user?.email || '',

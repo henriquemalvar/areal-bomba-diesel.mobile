@@ -46,7 +46,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundColor }]} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textColor }]}>Configurações</Text>
       </View>
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   menuItemLeft: {
     flexDirection: 'row',

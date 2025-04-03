@@ -1,48 +1,52 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
+import { useFeedback } from '../../components/FeedbackProvider';
 import { useAuth } from '../../contexts/AuthContext';
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(6, 'Senha atual deve ter no mínimo 6 caracteres'),
-  newPassword: z.string().min(6, 'Nova senha deve ter no mínimo 6 caracteres'),
-  confirmPassword: z.string()
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Senhas não conferem",
-  path: ["confirmPassword"],
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword'],
 });
 
-export default function ChangePasswordPage() {
+export default function ChangePasswordScreen() {
   const navigation = useNavigation();
   const { changePassword } = useAuth();
-  const { control, handleSubmit, formState: { errors } } = useForm();
-  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
-  const [showNewPassword, setShowNewPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const { showError, showSuccess } = useFeedback();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(changePasswordSchema),
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async (data) => {
     try {
       setLoading(true);
-      await changePassword(data.currentPassword, data.newPassword);
+      await changePassword(data.password);
+      showSuccess('Senha alterada', 'Sua senha foi alterada com sucesso');
       navigation.navigate('Login');
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
+      showError('Erro ao alterar senha', error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <LinearGradient
         colors={['#ffffff', '#f5f5f5']}
         style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -62,42 +66,14 @@ export default function ChangePasswordPage() {
               </View>
 
               <Text style={styles.title}>Alterar Senha</Text>
-              <Text style={styles.subtitle}>Digite sua senha atual e a nova senha</Text>
+              <Text style={styles.subtitle}>Digite sua nova senha</Text>
 
               <View style={styles.formContainer}>
                 <View style={styles.inputContainer}>
                   <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
                   <Controller
                     control={control}
-                    name="currentPassword"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Senha atual"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        secureTextEntry={!showCurrentPassword}
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                  <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
-                    <MaterialIcons
-                      name={showCurrentPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {errors.currentPassword && <Text style={styles.errorText}>{errors.currentPassword.message}</Text>}
-
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="newPassword"
+                    name="password"
                     render={({ field: { onChange, onBlur, value } }) => (
                       <TextInput
                         style={styles.input}
@@ -106,20 +82,13 @@ export default function ChangePasswordPage() {
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
-                        secureTextEntry={!showNewPassword}
+                        secureTextEntry
                         editable={!loading}
                       />
                     )}
                   />
-                  <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                    <MaterialIcons
-                      name={showNewPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
                 </View>
-                {errors.newPassword && <Text style={styles.errorText}>{errors.newPassword.message}</Text>}
+                {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
 
                 <View style={styles.inputContainer}>
                   <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
@@ -134,36 +103,29 @@ export default function ChangePasswordPage() {
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
-                        secureTextEntry={!showConfirmPassword}
+                        secureTextEntry
                         editable={!loading}
                       />
                     )}
                   />
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <MaterialIcons
-                      name={showConfirmPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
                 </View>
                 {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
 
                 <TouchableOpacity
-                  style={[styles.changeButton, loading && styles.changeButtonDisabled]}
+                  style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                   onPress={handleSubmit(handleChangePassword)}
                   disabled={loading}
                 >
-                  <Text style={styles.changeButtonText}>
+                  <Text style={styles.submitButtonText}>
                     {loading ? 'Alterando...' : 'Alterar senha'}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.backButton}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => navigation.navigate('Login')}
                 >
-                  <Text style={styles.backButtonText}>Voltar</Text>
+                  <Text style={styles.backButtonText}>Voltar para o login</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -257,38 +219,38 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#d32f2f',
-    alignSelf: 'flex-start',
+    fontSize: 14,
     marginBottom: 10,
-    fontSize: 12,
+    marginLeft: 5,
   },
-  changeButton: {
+  submitButton: {
     backgroundColor: '#1a237e',
     borderRadius: 12,
     padding: 15,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
-  changeButtonDisabled: {
+  submitButtonDisabled: {
     backgroundColor: '#9fa8da',
   },
-  changeButtonText: {
+  submitButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
   backButton: {
-    padding: 15,
-    alignItems: 'center',
+    marginTop: 15,
+    padding: 10,
   },
   backButtonText: {
     color: '#1a237e',
     fontSize: 16,
-    fontWeight: '500',
+    textAlign: 'center',
   },
 });

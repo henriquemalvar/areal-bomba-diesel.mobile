@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -6,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
+import { useFeedback } from '../../components/FeedbackProvider';
 import { useAuth } from '../../contexts/AuthContext';
 
 const loginSchema = z.object({
@@ -16,7 +18,10 @@ const loginSchema = z.object({
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { signIn } = useAuth();
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { showError, showSuccess } = useFeedback();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [debugInfo, setDebugInfo] = React.useState(null);
@@ -25,16 +30,10 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setDebugInfo(null);
-      const response = await signIn(data.email, data.password);
-
-      if (__DEV__) {
-        setDebugInfo({
-          success: true,
-          user: response.user,
-          timestamp: new Date().toISOString(),
-        });
-      }
+      await signIn(data.email, data.password);
+      showSuccess('Login realizado', 'Bem-vindo de volta!');
     } catch (error) {
+      showError('Erro no login', error.message);
       if (__DEV__) {
         setDebugInfo({
           success: false,
@@ -48,10 +47,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <LinearGradient
         colors={['#ffffff', '#f5f5f5']}
         style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -248,9 +249,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#d32f2f',
-    alignSelf: 'flex-start',
+    fontSize: 14,
     marginBottom: 10,
-    fontSize: 12,
+    marginLeft: 5,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -275,7 +276,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   loginButtonDisabled: {
-    backgroundColor: '#9fa8da',
+    opacity: 0.7,
+    backgroundColor: '#1a237e',
   },
   loginButtonText: {
     color: 'white',

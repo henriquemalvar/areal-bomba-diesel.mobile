@@ -29,7 +29,7 @@ export const login = async (email, password) => {
         return { token, user: usuario };
     } catch (error) {
         if (__DEV__) {
-            console.error('Erro no login:', error.response?.data || error.message);
+            console.error('Erro no login:', error.message);
             console.error('Status do erro:', error.response?.status);
             console.error('Dados enviados:', error.config?.data);
             console.error('Headers:', error.config?.headers);

@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState } from 'react';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 const FeedbackContext = createContext({});
 
 export function FeedbackProvider({ children }) {
   const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const showToast = (type, text1, text2) => {
     Toast.show({
@@ -14,8 +16,13 @@ export function FeedbackProvider({ children }) {
       position: 'top',
       visibilityTime: 4000,
       autoHide: true,
-      topOffset: 30,
-      bottomOffset: 40,
+      topOffset: insets.top + 10,
+      bottomOffset: insets.bottom + 10,
+      props: {
+        style: {
+          marginTop: insets.top,
+        },
+      },
     });
   };
 
@@ -41,8 +48,10 @@ export function FeedbackProvider({ children }) {
         showInfo,
       }}
     >
-      {children}
-      <Toast />
+      <SafeAreaView style={{ flex: 1 }}>
+        {children}
+        <Toast />
+      </SafeAreaView>
     </FeedbackContext.Provider>
   );
 }
