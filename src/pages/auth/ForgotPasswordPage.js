@@ -1,7 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 import Avatar from '../../components/common/Avatar';
 import Button from '../../components/common/Button';
@@ -18,7 +19,9 @@ const forgotPasswordSchema = z.object({
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
   const { forgotPassword } = useAuth();
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
 
@@ -26,7 +29,7 @@ export default function ForgotPasswordScreen() {
     try {
       setLoading(true);
       setDebugInfo(null);
-      const response = await forgotPassword(data.email);
+      await forgotPassword(data.email);
 
       if (__DEV__) {
         setDebugInfo({

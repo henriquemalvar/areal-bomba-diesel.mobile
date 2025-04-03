@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -16,7 +17,9 @@ const loginSchema = z.object({
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { signIn } = useAuth();
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [debugInfo, setDebugInfo] = React.useState(null);
@@ -248,9 +251,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#d32f2f',
-    alignSelf: 'flex-start',
+    fontSize: 14,
     marginBottom: 10,
-    fontSize: 12,
+    marginLeft: 5,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -275,7 +278,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   loginButtonDisabled: {
-    backgroundColor: '#9fa8da',
+    opacity: 0.7,
+    backgroundColor: '#1a237e',
   },
   loginButtonText: {
     color: 'white',
