@@ -1,197 +1,220 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { toast } from 'sonner-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { z } from 'zod';
+import Avatar from '../../components/common/Avatar';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Container from '../../components/common/Container';
+import Input from '../../components/common/Input';
+import { useAuth } from '../../contexts/AuthContext';
+import { colors, typography } from '../../styles/theme';
 
 const registerSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
+  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   email: z.string().email('E-mail inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword'],
 });
 
-export default function RegisterPage() {
+export default function RegisterScreen() {
   const navigation = useNavigation();
-  const { control, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(registerSchema),
-  });
-  const [showPassword, setShowPassword] = React.useState(false);
+  const { register } = useAuth();
+  const { control, handleSubmit, formState: { errors } } = useForm();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   const handleRegister = async (data) => {
-    toast.success('Registro realizado com sucesso!');
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Main' }],
-    });
+    try {
+      setLoading(true);
+      setDebugInfo(null);
+      const response = await register(data.name, data.email, data.password);
+
+      if (__DEV__) {
+        setDebugInfo({
+          success: true,
+          user: response.user,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      if (__DEV__) {
+        setDebugInfo({
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Image
-          source={{ uri: 'https://api.a0.dev/assets/image?text=construction%20machinery%20management%20app%20logo&aspect=1:1' }}
-          style={styles.logo}
-        />
-        
-        <Text style={styles.title}>Gestão de Frota</Text>
-        <Text style={styles.subtitle}>Crie uma conta para continuar</Text>
-
-        <View style={styles.inputContainer}>
-          <MaterialIcons name="person" size={24} color="#666" style={styles.icon} />
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Nome"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
-            )}
-          />
-        </View>
-        {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
-
-        <View style={styles.inputContainer}>
-          <MaterialIcons name="email" size={24} color="#666" style={styles.icon} />
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="E-mail"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            )}
-          />
-        </View>
-        {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-
-        <View style={styles.inputContainer}>
-          <MaterialIcons name="lock" size={24} color="#666" style={styles.icon} />
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Senha"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                secureTextEntry={!showPassword}
-              />
-            )}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <MaterialIcons 
-              name={showPassword ? "visibility" : "visibility-off"} 
-              size={24} 
-              color="#666" 
-            />
-          </TouchableOpacity>
-        </View>
-        {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-
-        <TouchableOpacity style={styles.registerButton} onPress={handleSubmit(handleRegister)}>
-          <Text style={styles.registerButtonText}>Registrar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Login')}
+    <Container>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.loginButtonText}>Voltar ao Login</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+          <View style={styles.content}>
+            <View style={styles.logoContainer}>
+              <Avatar size={120} icon="person-add" />
+            </View>
+
+            <Text style={[typography.h1, styles.title]}>Criar Conta</Text>
+            <Text style={[typography.body2, styles.subtitle]}>Preencha os dados para se registrar</Text>
+
+            <Card>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="Nome"
+                    icon="person"
+                    placeholder="Digite seu nome"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="words"
+                    error={errors.name?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="E-mail"
+                    icon="email"
+                    placeholder="Digite seu e-mail"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={errors.email?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="Senha"
+                    icon="lock"
+                    placeholder="Digite sua senha"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    secureTextEntry={!showPassword}
+                    showPassword={showPassword}
+                    onTogglePassword={() => setShowPassword(!showPassword)}
+                    error={errors.password?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="Confirmar Senha"
+                    icon="lock"
+                    placeholder="Confirme sua senha"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    secureTextEntry={!showConfirmPassword}
+                    showPassword={showConfirmPassword}
+                    onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                    error={errors.confirmPassword?.message}
+                  />
+                )}
+              />
+
+              <Button
+                title={loading ? 'Criando conta...' : 'Criar Conta'}
+                onPress={handleSubmit(handleRegister)}
+                loading={loading}
+                style={styles.registerButton}
+              />
+
+              <Button
+                title="Já tem uma conta? Faça login"
+                onPress={() => navigation.navigate('Login')}
+                variant="secondary"
+              />
+            </Card>
+
+            {__DEV__ && debugInfo && (
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugTitle}>Debug Info:</Text>
+                <Text style={styles.debugText}>
+                  {JSON.stringify(debugInfo, null, 2)}
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardAvoid: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
-    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  logoContainer: {
     marginBottom: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
     marginBottom: 10,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    marginBottom: 15,
-    padding: 15,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-  },
-  errorText: {
-    color: 'red',
-    alignSelf: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 40,
+    textAlign: 'center',
   },
   registerButton: {
-    backgroundColor: '#2196F3',
-    borderRadius: 10,
-    padding: 15,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  registerButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  debugContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: colors.background.dark,
+    borderRadius: 8,
   },
-  loginButton: {
-    padding: 15,
+  debugTitle: {
+    ...typography.body2,
+    marginBottom: 5,
   },
-  loginButtonText: {
-    color: '#2196F3',
-    fontSize: 16,
+  debugText: {
+    ...typography.caption,
   },
 });

@@ -1,14 +1,20 @@
-import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AuthRoutes from './src/routes/AuthRoutes';
+import { FeedbackProvider } from './src/components/FeedbackProvider';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
+import Routes from './src/routes';
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <AuthRoutes />
-      </NavigationContainer>
+      <ThemeProvider>
+        <FeedbackProvider>
+          <AuthProvider>
+            <Routes />
+          </AuthProvider>
+        </FeedbackProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
