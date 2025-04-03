@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import ErrorModal from '../components/ErrorModal';
-import { login, logout } from '../services/auth';
+import { useFeedback } from '../components/FeedbackProvider';
+import { getUserData, login, logout } from '../services/auth';
 
 const AuthContext = createContext({});
 
@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
+    const { showSuccess, showError } = useFeedback();
 
     useEffect(() => {
         checkAuth();
@@ -16,14 +17,18 @@ export function AuthProvider({ children }) {
 
     async function checkAuth() {
         try {
-            const token = await AsyncStorage.getItem('@token');
-            const userData = await AsyncStorage.getItem('@user');
+            const userData = await getUserData();
+            if (__DEV__) {
+                console.log('Dados do usuário recuperados:', userData);
+            }
 
-            if (token && userData) {
-                setUser(JSON.parse(userData));
+            if (userData) {
+                setUser(userData);
+                showSuccess(`Que bom te ver novamente, ${userData.nome}!`, 'Olá! 👋');
             }
         } catch (error) {
             console.error('Erro ao verificar autenticação:', error);
+            showError('Não foi possível verificar sua autenticação');
         } finally {
             setLoading(false);
         }
@@ -33,17 +38,17 @@ export function AuthProvider({ children }) {
         try {
             const response = await login(email, password);
             if (__DEV__) {
-                console.log('Login realizado com sucesso:', response);
+                console.log('Resposta do login:', response);
             }
-            await AsyncStorage.setItem('@token', response.token);
-            await AsyncStorage.setItem('@user', JSON.stringify(response.user));
             setUser(response.user);
+            showSuccess(`Que bom te ver, ${response.user.nome}!`, 'Olá! 👋');
             return response;
         } catch (error) {
             if (__DEV__) {
                 console.error('Erro no login:', error);
             }
             setError(error);
+            showError('Email ou senha incorretos');
             throw error;
         }
     }
@@ -52,17 +57,17 @@ export function AuthProvider({ children }) {
         try {
             const response = await login(email, password);
             if (__DEV__) {
-                console.log('Login realizado com sucesso:', response);
+                console.log('Resposta do cadastro:', response);
             }
-            await AsyncStorage.setItem('@token', response.token);
-            await AsyncStorage.setItem('@user', JSON.stringify(response.user));
             setUser(response.user);
+            showSuccess(`Seja bem-vindo(a), ${response.user.nome}!`, 'Conta criada! 🎉');
             return response;
         } catch (error) {
             if (__DEV__) {
                 console.error('Erro ao criar conta:', error);
             }
             setError(error);
+            showError('Não foi possível criar sua conta');
             throw error;
         }
     }
@@ -70,17 +75,17 @@ export function AuthProvider({ children }) {
     async function signOut() {
         try {
             await logout();
-            await AsyncStorage.removeItem('@token');
-            await AsyncStorage.removeItem('@user');
             if (__DEV__) {
                 console.log('Logout realizado com sucesso');
             }
             setUser(null);
+            showSuccess('Até logo! 👋', 'Desconectado');
         } catch (error) {
             if (__DEV__) {
                 console.error('Erro no logout:', error);
             }
             setError(error);
+            showError('Não foi possível fazer logout');
             throw error;
         }
     }
