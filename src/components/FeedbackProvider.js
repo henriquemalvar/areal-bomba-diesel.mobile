@@ -1,51 +1,63 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 const FeedbackContext = createContext({});
 
-export const FeedbackProvider = ({ children }) => {
-    const showSuccess = (message, title = '') => {
-        Toast.show({
-            type: 'success',
-            text1: title,
-            text2: message,
-            position: 'top',
-            visibilityTime: 3000,
-        });
-    };
+export function FeedbackProvider({ children }) {
+  const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
-    const showError = (message, title = 'Ops!') => {
-        Toast.show({
-            type: 'error',
-            text1: title,
-            text2: message,
-            position: 'top',
-            visibilityTime: 3000,
-        });
-    };
+  const showToast = (type, text1, text2) => {
+    Toast.show({
+      type,
+      text1,
+      text2,
+      position: 'top',
+      visibilityTime: 4000,
+      autoHide: true,
+      topOffset: insets.top + 10,
+      bottomOffset: insets.bottom + 10,
+      props: {
+        style: {
+          marginTop: insets.top,
+        },
+      },
+    });
+  };
 
-    const showInfo = (message, title = '') => {
-        Toast.show({
-            type: 'info',
-            text1: title,
-            text2: message,
-            position: 'top',
-            visibilityTime: 3000,
-        });
-    };
+  const showSuccess = (title, message) => {
+    showToast('success', title, message);
+  };
 
-    return (
-        <FeedbackContext.Provider value={{ showSuccess, showError, showInfo }}>
-            {children}
-            <Toast />
-        </FeedbackContext.Provider>
-    );
-};
+  const showError = (title, message) => {
+    showToast('error', title, message);
+  };
 
-export const useFeedback = () => {
-    const context = useContext(FeedbackContext);
-    if (!context) {
-        throw new Error('useFeedback deve ser usado dentro de um FeedbackProvider');
-    }
-    return context;
-}; 
+  const showInfo = (title, message) => {
+    showToast('info', title, message);
+  };
+
+  return (
+    <FeedbackContext.Provider
+      value={{
+        loading,
+        setLoading,
+        showSuccess,
+        showError,
+        showInfo,
+      }}
+    >
+      {children}
+      <Toast />
+    </FeedbackContext.Provider>
+  );
+}
+
+export function useFeedback() {
+  const context = useContext(FeedbackContext);
+  if (!context) {
+    throw new Error('useFeedback must be used within a FeedbackProvider');
+  }
+  return context;
+}

@@ -3,9 +3,10 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: `${API_URL}/api`,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
     },
 });
 
@@ -37,14 +38,29 @@ if (__DEV__) {
             return response;
         },
         (error) => {
+            const errorMessage = error.response?.data?.message || error.message;
+            const errorStatus = error.response?.status;
+            
             console.error('API Response Error:', {
                 url: error.config?.url,
-                status: error.response?.status,
+                status: errorStatus,
+                message: errorMessage,
                 data: error.response?.data,
                 headers: error.config?.headers,
                 requestData: error.config?.data,
             });
-            return Promise.reject(error);
+
+            // Tratamento específico para erros de rede
+            if (error.message === 'Network Error') {
+                throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão com a internet.');
+            }
+
+            // Tratamento para erros de autenticação
+            if (errorStatus === 401) {
+                throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.');
+            }
+
+            throw new Error(errorMessage || 'Ocorreu um erro inesperado. Tente novamente mais tarde.');
         }
     );
 }

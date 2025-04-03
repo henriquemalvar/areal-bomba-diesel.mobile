@@ -2,7 +2,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -36,8 +35,8 @@ export default function SettingsPage() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      <View style={[styles.header, { borderBottomColor: theme.borderColor }]}>
         <Text style={[styles.title, { color: theme.textColor }]}>Configurações</Text>
       </View>
 
@@ -66,7 +65,7 @@ export default function SettingsPage() {
           </TouchableOpacity>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -77,7 +76,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   title: {
     fontSize: 24,
@@ -92,7 +90,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   menuItemLeft: {
     flexDirection: 'row',
