@@ -13,16 +13,6 @@ export default function SettingsPage() {
 
   const menuItems = [
     {
-      icon: 'person',
-      title: 'Perfil',
-      onPress: () => navigation.navigate('Profile'),
-    },
-    {
-      icon: 'edit',
-      title: 'Editar Perfil',
-      onPress: () => navigation.navigate('EditProfile'),
-    },
-    {
       icon: 'lock',
       title: 'Alterar Senha',
       onPress: () => navigation.navigate('ChangePassword'),
