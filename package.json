@@ -8,7 +8,11 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "build:android": "eas build --platform android --profile preview",
+    "build:android:local": "eas build --platform android --profile preview --local",
+    "build:android:release": "eas build --platform android --profile production",
+    "build:android:release:local": "eas build --platform android --profile production --local"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -37,6 +41,7 @@
     "@babel/core": "^7.20.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
+    "eas-cli": "^16.3.1",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",

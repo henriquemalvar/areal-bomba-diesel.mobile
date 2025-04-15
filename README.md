@@ -98,6 +98,24 @@ npm start
    - Android: `npm run android`
    - iOS: `npm run ios`
 
+## 📦 Gerando APK Local
+
+Para gerar um APK localmente, siga os passos:
+
+1. Certifique-se de ter o Android Studio instalado e configurado
+2. Execute um dos seguintes comandos:
+   - Para build de preview: `npm run build:android:local`
+   - Para build de produção: `npm run build:android:release:local`
+
+O APK será gerado na pasta `android/app/build/outputs/apk/release/`
+
+### Requisitos para Build Local
+
+- Android Studio instalado
+- Android SDK configurado
+- Variáveis de ambiente ANDROID_HOME e JAVA_HOME configuradas
+- Gradle configurado
+
 ## 🛠️ Ambiente de Desenvolvimento
 
 ### Pré-requisitos
