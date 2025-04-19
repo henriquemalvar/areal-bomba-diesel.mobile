@@ -41,12 +41,30 @@ export default function ProfilePage() {
     },
   ];
 
+  const getRoleLabel = (role) => {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+        return 'Administrador';
+      case 'MANAGER':
+        return 'Gerente';
+      case 'OPERATOR':
+        return 'Operador';
+      case 'USER':
+        return 'Usuário';
+      default:
+        return 'Usuário';
+    }
+  };
+
   return (
     <Container>
       <View style={styles.profileSection}>
         <Avatar />
         <Text style={[typography.h1, styles.userName]}>{user?.nome}</Text>
         <Text style={[typography.body2, styles.userEmail]}>{user?.email}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>{getRoleLabel(user?.funcao)}</Text>
+        </View>
       </View>
 
       <Card>
@@ -79,6 +97,18 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  roleBadge: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
   menuItem: {
     paddingVertical: 15,

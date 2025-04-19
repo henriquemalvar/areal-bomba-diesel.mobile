@@ -4,9 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import AvatarWithInitials from '../../components/AvatarWithInitials';
+import Container from '../../components/common/Container';
 import { useAuth } from '../../contexts/AuthContext';
 
 const editProfileSchema = z.object({
@@ -43,7 +43,7 @@ export default function EditProfilePage() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Container>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -53,6 +53,7 @@ export default function EditProfilePage() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
+            <Text style={styles.pageTitle}>Editar Perfil</Text>
             <View style={styles.avatarContainer}>
               <AvatarWithInitials name={user?.nome || ''} />
             </View>
@@ -154,15 +155,11 @@ export default function EditProfilePage() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
   keyboardAvoid: {
     flex: 1,
   },
@@ -173,19 +170,19 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   avatarContainer: {
     alignItems: 'center',
     marginBottom: 30,
   },
   formContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    marginTop: 10,
   },
   inputContainer: {
     flexDirection: 'row',

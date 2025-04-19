@@ -6,7 +6,7 @@ import { gradients } from '../../styles/theme';
 
 export default function Container({ children, style, gradient = 'primary' }) {
   return (
-    <SafeAreaView style={[styles.container, style]}>
+    <SafeAreaView style={[styles.container, style]} edges={['right', 'bottom', 'left']}>
       <LinearGradient
         colors={gradients[gradient]}
         style={styles.gradient}

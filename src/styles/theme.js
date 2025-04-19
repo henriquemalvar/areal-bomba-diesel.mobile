@@ -92,6 +92,6 @@ export const borderRadius = {
 };
 
 export const gradients = {
-  primary: ['#ffffff', '#f5f5f5'],
+  primary: ['#ffffff', '#ffffff', '#f5f5f5'],
   secondary: ['#1a237e', '#534bae'],
 }; 
