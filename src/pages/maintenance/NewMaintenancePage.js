@@ -1,15 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Card from '../../components/common/Card';
 import Container from '../../components/common/Container';
@@ -18,8 +17,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 export default function NewMaintenancePage() {
   const { theme } = useTheme();
   const navigation = useNavigation();
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showNextDatePicker, setShowNextDatePicker] = useState(false);
   const [formData, setFormData] = useState({
     maquina: '',
     tipo: '',
@@ -58,7 +55,7 @@ export default function NewMaintenancePage() {
         <Text style={[styles.label, { color: theme.textSecondaryColor }]}>{label}</Text>
       </View>
       <TextInput
-        style={[styles.input, { 
+        style={[styles.input, {
           backgroundColor: theme.backgroundColor,
           color: theme.textColor,
           borderColor: theme.borderColor,
@@ -94,11 +91,11 @@ export default function NewMaintenancePage() {
               <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Máquina</Text>
             </View>
             <TouchableOpacity
-              style={[styles.select, { 
+              style={[styles.select, {
                 backgroundColor: theme.backgroundColor,
                 borderColor: theme.borderColor,
               }]}
-              onPress={() => {/* Implementar seleção de máquina */}}
+              onPress={() => {/* Implementar seleção de máquina */ }}
             >
               <Text style={[styles.selectText, { color: formData.maquina ? theme.textColor : theme.textSecondaryColor }]}>
                 {formData.maquina || 'Selecione uma máquina'}
@@ -113,11 +110,11 @@ export default function NewMaintenancePage() {
               <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Tipo de Manutenção</Text>
             </View>
             <TouchableOpacity
-              style={[styles.select, { 
+              style={[styles.select, {
                 backgroundColor: theme.backgroundColor,
                 borderColor: theme.borderColor,
               }]}
-              onPress={() => {/* Implementar seleção de tipo */}}
+              onPress={() => {/* Implementar seleção de tipo */ }}
             >
               <Text style={[styles.selectText, { color: formData.tipo ? theme.textColor : theme.textSecondaryColor }]}>
                 {formData.tipo || 'Selecione o tipo'}
@@ -131,33 +128,16 @@ export default function NewMaintenancePage() {
               <MaterialIcons name="event" size={20} color={theme.textSecondaryColor} />
               <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Data da Manutenção</Text>
             </View>
-            <TouchableOpacity
-              style={[styles.select, { 
+            <TextInput
+              style={[styles.select, {
                 backgroundColor: theme.backgroundColor,
+                color: theme.textColor,
                 borderColor: theme.borderColor,
               }]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={[styles.selectText, { color: theme.textColor }]}>
-                {formData.data.toLocaleDateString('pt-BR')}
-              </Text>
-              <MaterialIcons name="event" size={24} color={theme.textColor} />
-            </TouchableOpacity>
-          </View>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={formData.data}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setFormData({ ...formData, data: selectedDate });
-                }
-              }}
+              value={formData.data.toLocaleDateString('pt-BR')}
+              editable={false}
             />
-          )}
+          </View>
 
           {renderInput(
             'Descrição',
@@ -183,33 +163,18 @@ export default function NewMaintenancePage() {
                 <MaterialIcons name="schedule" size={20} color={theme.textSecondaryColor} />
                 <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Próxima Revisão</Text>
               </View>
-              <TouchableOpacity
-                style={[styles.select, { 
+              <TextInput
+                style={[styles.select, {
                   backgroundColor: theme.backgroundColor,
+                  color: theme.textColor,
                   borderColor: theme.borderColor,
                 }]}
-                onPress={() => setShowNextDatePicker(true)}
-              >
-                <Text style={[styles.selectText, { color: formData.proximaRevisao ? theme.textColor : theme.textSecondaryColor }]}>
-                  {formData.proximaRevisao ? formData.proximaRevisao.toLocaleDateString('pt-BR') : 'Selecione a data'}
-                </Text>
-                <MaterialIcons name="event" size={24} color={theme.textColor} />
-              </TouchableOpacity>
+                value={formData.proximaRevisao ? formData.proximaRevisao.toLocaleDateString('pt-BR') : ''}
+                placeholder="Selecione a data"
+                placeholderTextColor={theme.textSecondaryColor}
+                editable={false}
+              />
             </View>
-          )}
-
-          {showNextDatePicker && (
-            <DateTimePicker
-              value={formData.proximaRevisao || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowNextDatePicker(false);
-                if (selectedDate) {
-                  setFormData({ ...formData, proximaRevisao: selectedDate });
-                }
-              }}
-            />
           )}
 
           {renderInput(

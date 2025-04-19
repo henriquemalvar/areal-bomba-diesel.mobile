@@ -1,5 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,7 +25,6 @@ export default function NewFuelPage() {
   const { theme } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [formData, setFormData] = useState({
     maquina: '',
     quantidade: '',
@@ -130,30 +128,15 @@ export default function NewFuelPage() {
           <Text style={[styles.label, { color: theme.textColor }]}>
             Data e Hora
           </Text>
-          <TouchableOpacity
+          <TextInput
             style={[styles.input, {
               backgroundColor: theme.inputBackgroundColor,
+              color: theme.textColor,
               borderColor: theme.borderColor,
             }]}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={[styles.inputText, { color: theme.textColor }]}>
-              {format(formData.data, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={formData.data}
-              mode="datetime"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setFormData({ ...formData, data: selectedDate });
-                }
-              }}
-            />
-          )}
+            value={format(formData.data, "dd/MM/yyyy HH:mm")}
+            editable={false}
+          />
         </View>
 
         <View style={styles.formGroup}>
