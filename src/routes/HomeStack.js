@@ -13,7 +13,7 @@ export default function HomeStack() {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="HomeScreen" component={HomePage} />
+      <Stack.Screen name="Home" component={HomePage} />
       <Stack.Screen name="FuelDetails" component={FuelDetailsPage} />
       <Stack.Screen name="MaintenanceDetails" component={MaintenanceDetailsPage} />
     </Stack.Navigator>
