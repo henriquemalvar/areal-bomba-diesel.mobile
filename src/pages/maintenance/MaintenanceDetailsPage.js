@@ -2,7 +2,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Card from '../../components/common/Card';
 import Container from '../../components/common/Container';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -63,7 +62,7 @@ export default function MaintenanceDetailsPage({ route }) {
   return (
     <Container>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -73,8 +72,8 @@ export default function MaintenanceDetailsPage({ route }) {
       </View>
 
       <ScrollView style={styles.content}>
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
             <View style={styles.maquinaContainer}>
               <MaterialIcons
                 name={manutencao.tipo === 'preventiva' ? 'build' : 'warning'}
@@ -88,65 +87,65 @@ export default function MaintenanceDetailsPage({ route }) {
             </View>
           </View>
 
-          <View style={styles.infoSection}>
+          <View style={styles.infoGroup}>
             <View style={styles.infoRow}>
-              <View style={styles.infoLabelContainer}>
-                <MaterialIcons name="build" size={16} color={theme.textSecondaryColor} />
+              <MaterialIcons name="build" size={20} color={theme.textSecondaryColor} />
+              <View style={styles.infoContent}>
                 <Text style={[styles.infoLabel, { color: theme.textSecondaryColor }]}>Tipo</Text>
+                <Text style={[styles.infoValue, { color: theme.textColor }]}>
+                  {getTipoLabel(manutencao.tipo)}
+                </Text>
               </View>
-              <Text style={[styles.infoValue, { color: theme.textColor }]}>
-                {getTipoLabel(manutencao.tipo)}
-              </Text>
             </View>
 
             <View style={styles.infoRow}>
-              <View style={styles.infoLabelContainer}>
-                <MaterialIcons name="event" size={16} color={theme.textSecondaryColor} />
+              <MaterialIcons name="event" size={20} color={theme.textSecondaryColor} />
+              <View style={styles.infoContent}>
                 <Text style={[styles.infoLabel, { color: theme.textSecondaryColor }]}>Data</Text>
+                <Text style={[styles.infoValue, { color: theme.textColor }]}>
+                  {formatDate(manutencao.data)}
+                </Text>
               </View>
-              <Text style={[styles.infoValue, { color: theme.textColor }]}>
-                {formatDate(manutencao.data)}
-              </Text>
             </View>
 
             <View style={styles.infoRow}>
-              <View style={styles.infoLabelContainer}>
-                <MaterialIcons name="person" size={16} color={theme.textSecondaryColor} />
+              <MaterialIcons name="person" size={20} color={theme.textSecondaryColor} />
+              <View style={styles.infoContent}>
                 <Text style={[styles.infoLabel, { color: theme.textSecondaryColor }]}>Responsável</Text>
+                <Text style={[styles.infoValue, { color: theme.textColor }]}>
+                  {manutencao.responsavel}
+                </Text>
               </View>
-              <Text style={[styles.infoValue, { color: theme.textColor }]}>
-                {manutencao.responsavel}
-              </Text>
             </View>
 
             {manutencao.proximaRevisao && (
               <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <MaterialIcons name="schedule" size={16} color={theme.textSecondaryColor} />
+                <MaterialIcons name="schedule" size={20} color={theme.textSecondaryColor} />
+                <View style={styles.infoContent}>
                   <Text style={[styles.infoLabel, { color: theme.textSecondaryColor }]}>Próxima Revisão</Text>
+                  <Text style={[styles.infoValue, { color: theme.textColor }]}>
+                    {formatDate(manutencao.proximaRevisao)}
+                  </Text>
                 </View>
-                <Text style={[styles.infoValue, { color: theme.textColor }]}>
-                  {formatDate(manutencao.proximaRevisao)}
-                </Text>
               </View>
             )}
 
             {manutencao.custo && (
               <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <MaterialIcons name="attach-money" size={16} color={theme.textSecondaryColor} />
+                <MaterialIcons name="attach-money" size={20} color={theme.textSecondaryColor} />
+                <View style={styles.infoContent}>
                   <Text style={[styles.infoLabel, { color: theme.textSecondaryColor }]}>Custo</Text>
+                  <Text style={[styles.infoValue, { color: theme.textColor }]}>
+                    {formatCurrency(manutencao.custo)}
+                  </Text>
                 </View>
-                <Text style={[styles.infoValue, { color: theme.textColor }]}>
-                  {formatCurrency(manutencao.custo)}
-                </Text>
               </View>
             )}
           </View>
 
           <View style={styles.descriptionSection}>
             <View style={styles.descriptionHeader}>
-              <MaterialIcons name="description" size={16} color={theme.textSecondaryColor} />
+              <MaterialIcons name="description" size={20} color={theme.textSecondaryColor} />
               <Text style={[styles.descriptionLabel, { color: theme.textSecondaryColor }]}>
                 Descrição
               </Text>
@@ -155,16 +154,13 @@ export default function MaintenanceDetailsPage({ route }) {
               {manutencao.descricao}
             </Text>
           </View>
-        </Card>
+        </View>
       </ScrollView>
     </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -181,16 +177,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  section: {
     padding: 20,
   },
-  card: {
-    marginBottom: 20,
-  },
-  cardHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   maquinaContainer: {
     flexDirection: 'row',
@@ -198,7 +193,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   maquina: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   statusBadge: {
@@ -211,29 +206,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  infoSection: {
-    marginBottom: 20,
+  infoGroup: {
+    gap: 24,
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    gap: 16,
   },
-  infoLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  infoContent: {
+    flex: 1,
   },
   infoLabel: {
     fontSize: 14,
+    marginBottom: 4,
   },
   infoValue: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
   },
   descriptionSection: {
-    marginTop: 20,
+    marginTop: 24,
   },
   descriptionHeader: {
     flexDirection: 'row',
@@ -245,7 +236,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   descriptionText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
 });
