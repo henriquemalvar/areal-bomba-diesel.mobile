@@ -1,11 +1,9 @@
-import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Container from '../../components/common/Container';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function PrivacyPage() {
-    const navigation = useNavigation();
     const { theme } = useTheme();
 
     return (
