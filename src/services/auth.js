@@ -6,19 +6,10 @@ const USER_DATA_KEY = '@user_data';
 
 export const login = async (email, password) => {
     try {
-        if (__DEV__) {
-            console.log('Tentando fazer login com:', { email });
-            console.log('URL da API:', api.defaults.baseURL);
-        }
-
         const response = await api.post('/auth/login', {
             email: email.trim(),
             senha: password.trim()
         });
-
-        if (__DEV__) {
-            console.log('Resposta do servidor:', response.data);
-        }
 
         const { token, usuario } = response.data;
 
@@ -28,12 +19,6 @@ export const login = async (email, password) => {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         return { token, user: usuario };
     } catch (error) {
-        if (__DEV__) {
-            console.error('Erro no login:', error.message);
-            console.error('Status do erro:', error.response?.status);
-            console.error('Dados enviados:', error.config?.data);
-            console.error('Headers:', error.config?.headers);
-        }
         throw error;
     }
 };
