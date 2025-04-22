@@ -3,11 +3,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
-import AvatarWithInitials from '../../components/AvatarWithInitials';
-import Container from '../../components/common/Container';
+import DefaultPage from '../../components/common/DefaultPage';
+import { UserInfoCard } from '../../components/UserInfoCard';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { ActivityIndicator } from 'react-native';
 
 const editProfileSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -19,6 +21,9 @@ const editProfileSchema = z.object({
 export default function EditProfilePage() {
   const navigation = useNavigation();
   const { user, updateProfile } = useAuth();
+  const { theme } = useTheme();
+  const [loading, setLoading] = React.useState(false);
+
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(editProfileSchema),
     defaultValues: {
@@ -28,7 +33,6 @@ export default function EditProfilePage() {
       empresa: user?.empresa || '',
     }
   });
-  const [loading, setLoading] = React.useState(false);
 
   const onSubmit = async (data) => {
     try {
@@ -43,143 +47,118 @@ export default function EditProfilePage() {
   };
 
   return (
-    <Container>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.content}>
-            <Text style={styles.pageTitle}>Editar Perfil</Text>
-            <View style={styles.avatarContainer}>
-              <AvatarWithInitials name={user?.nome || ''} />
-            </View>
-
-            <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="person" size={24} color="#1a237e" style={styles.icon} />
-                <Controller
-                  control={control}
-                  name="nome"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Nome completo"
-                      placeholderTextColor="#666"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      editable={!loading}
-                    />
-                  )}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoid}
+    >
+      <DefaultPage title="Editar Perfil" backButton={true}>
+        <UserInfoCard user={user} />
+        <View style={styles.formContainer}>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="person" size={24} color={theme.primaryColor} style={styles.icon} />
+            <Controller
+              control={control}
+              name="nome"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, { color: theme.textColor }]}
+                  placeholder="Nome completo"
+                  placeholderTextColor={theme.placeholderColor}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  editable={!loading}
                 />
-              </View>
-              {errors.nome && <Text style={styles.errorText}>{errors.nome.message}</Text>}
-
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="email" size={24} color="#1a237e" style={styles.icon} />
-                <Controller
-                  control={control}
-                  name="email"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="E-mail"
-                      placeholderTextColor="#666"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      editable={!loading}
-                    />
-                  )}
-                />
-              </View>
-              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="phone" size={24} color="#1a237e" style={styles.icon} />
-                <Controller
-                  control={control}
-                  name="telefone"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Telefone"
-                      placeholderTextColor="#666"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      keyboardType="phone-pad"
-                      editable={!loading}
-                    />
-                  )}
-                />
-              </View>
-              {errors.telefone && <Text style={styles.errorText}>{errors.telefone.message}</Text>}
-
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="business" size={24} color="#1a237e" style={styles.icon} />
-                <Controller
-                  control={control}
-                  name="empresa"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Empresa"
-                      placeholderTextColor="#666"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      editable={!loading}
-                    />
-                  )}
-                />
-              </View>
-              {errors.empresa && <Text style={styles.errorText}>{errors.empresa.message}</Text>}
-
-              <TouchableOpacity
-                style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-                onPress={handleSubmit(onSubmit)}
-                disabled={loading}
-              >
-                <Text style={styles.saveButtonText}>
-                  {loading ? 'Salvando...' : 'Salvar alterações'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+              )}
+            />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Container>
+          {errors.nome && <Text style={styles.errorText}>{errors.nome.message}</Text>}
+
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="email" size={24} color={theme.primaryColor} style={styles.icon} />
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, { color: theme.textColor }]}
+                  placeholder="E-mail"
+                  placeholderTextColor={theme.placeholderColor}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                />
+              )}
+            />
+          </View>
+          {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="phone" size={24} color={theme.primaryColor} style={styles.icon} />
+            <Controller
+              control={control}
+              name="telefone"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, { color: theme.textColor }]}
+                  placeholder="Telefone"
+                  placeholderTextColor={theme.placeholderColor}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  keyboardType="phone-pad"
+                  editable={!loading}
+                />
+              )}
+            />
+          </View>
+          {errors.telefone && <Text style={styles.errorText}>{errors.telefone.message}</Text>}
+
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="business" size={24} color={theme.primaryColor} style={styles.icon} />
+            <Controller
+              control={control}
+              name="empresa"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, { color: theme.textColor }]}
+                  placeholder="Empresa"
+                  placeholderTextColor={theme.placeholderColor}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  editable={!loading}
+                />
+              )}
+            />
+          </View>
+          {errors.empresa && <Text style={styles.errorText}>{errors.empresa.message}</Text>}
+
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: theme.primaryColor }]}
+            onPress={handleSubmit(onSubmit)}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={'white'} />
+            ) : (
+              <Text style={styles.saveButtonText}>
+                Salvar alterações
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </DefaultPage>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a237e',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
   },
   formContainer: {
     marginTop: 10,
@@ -200,7 +179,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
   },
   errorText: {
     color: '#d32f2f',
@@ -209,11 +187,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   saveButton: {
-    backgroundColor: '#1a237e',
+    height: 50,
     borderRadius: 12,
-    padding: 15,
-    width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -221,11 +198,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  saveButtonDisabled: {
-    backgroundColor: '#9fa8da',
-  },
   saveButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },

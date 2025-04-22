@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Avatar from '../../components/common/Avatar';
+import { StyleSheet } from 'react-native';
 import Card from '../../components/common/Card';
-import Container from '../../components/common/Container';
+import DefaultPage from '../../components/common/DefaultPage';
 import MenuItem from '../../components/common/MenuItem';
+import { UserInfoCard } from '../../components/UserInfoCard';
 import { useAuth } from '../../contexts/AuthContext';
-import { colors, typography } from '../../styles/theme';
+import { colors } from '../../styles/theme';
 
 export default function ProfilePage() {
   const navigation = useNavigation();
@@ -41,32 +41,9 @@ export default function ProfilePage() {
     },
   ];
 
-  const getRoleLabel = (role) => {
-    switch (role?.toUpperCase()) {
-      case 'ADMIN':
-        return 'Administrador';
-      case 'MANAGER':
-        return 'Gerente';
-      case 'OPERATOR':
-        return 'Operador';
-      case 'USER':
-        return 'Usuário';
-      default:
-        return 'Usuário';
-    }
-  };
-
   return (
-    <Container>
-      <View style={styles.profileSection}>
-        <Avatar />
-        <Text style={[typography.h1, styles.userName]}>{user?.nome}</Text>
-        <Text style={[typography.body2, styles.userEmail]}>{user?.email}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{getRoleLabel(user?.funcao)}</Text>
-        </View>
-      </View>
-
+    <DefaultPage title="Configurações">
+      <UserInfoCard user={user} />
       <Card>
         {menuItems.map((item, index) => (
           <MenuItem
@@ -82,34 +59,11 @@ export default function ProfilePage() {
           />
         ))}
       </Card>
-    </Container>
+    </DefaultPage>
   );
 }
 
 const styles = StyleSheet.create({
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  userName: {
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  userEmail: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  roleBadge: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  roleText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   menuItem: {
     paddingVertical: 15,
   },

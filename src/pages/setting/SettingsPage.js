@@ -83,6 +83,7 @@ export default function SettingsPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
   },
   header: {
     padding: 20,
