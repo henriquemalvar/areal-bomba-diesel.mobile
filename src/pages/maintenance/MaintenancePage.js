@@ -1,62 +1,22 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Card from '../../components/common/Card';
-import Container from '../../components/common/Container';
-import FilterModal from '../../components/common/FilterModal';
-import { useTheme } from '../../contexts/ThemeContext';
-
-// Dados mockados para exemplo
-const mockManutencoes = [
-  {
-    id: '1',
-    maquina: 'Draga 01',
-    tipo: 'preventiva',
-    data: new Date('2024-04-15'),
-    status: 'concluida',
-    descricao: 'Troca de óleo e filtros',
-    responsavel: 'João Silva',
-    proximaRevisao: new Date('2024-05-15'),
-    custo: 1500.00,
-  },
-  {
-    id: '2',
-    maquina: 'Pá Carregadeira 02',
-    tipo: 'corretiva',
-    data: new Date('2024-04-10'),
-    status: 'pendente',
-    descricao: 'Reparo no sistema hidráulico',
-    responsavel: 'Maria Santos',
-    proximaRevisao: null,
-    custo: 2500.00,
-  },
-];
-
-const mockMaquinas = [
-  { id: '1', nome: 'Draga 01' },
-  { id: '2', nome: 'Draga 02' },
-  { id: '3', nome: 'Pá Carregadeira 01' },
-  { id: '4', nome: 'Pá Carregadeira 02' },
-];
+import DefaultPage from '../../components/common/DefaultPage';
 
 const mockData = {
-  resumoMes: {
-    totalManutencoes: 8,
-    preventivas: 5,
-    corretivas: 3,
-  },
   ultimasManutencoes: [
     {
       id: '1',
       maquina: 'Draga 01',
       tipo: 'preventiva',
-      data: new Date(),
+      data: new Date('2024-03-20T10:00:00'),
       status: 'concluida',
       responsavel: 'João Silva',
     },
@@ -64,354 +24,375 @@ const mockData = {
       id: '2',
       maquina: 'Draga 02',
       tipo: 'corretiva',
-      data: new Date(),
+      data: new Date('2024-03-19T15:30:00'),
       status: 'pendente',
       responsavel: 'Maria Santos',
+    },
+    {
+      id: '3',
+      maquina: 'Draga 03',
+      tipo: 'preventiva',
+      data: new Date('2024-03-18T09:15:00'),
+      status: 'concluida',
+      responsavel: 'Pedro Oliveira',
+    },
+    {
+      id: '4',
+      maquina: 'Draga 01',
+      tipo: 'corretiva',
+      data: new Date('2024-03-17T14:20:00'),
+      status: 'pendente',
+      responsavel: 'João Silva',
     },
   ],
 };
 
 export default function MaintenancePage() {
-  const { theme } = useTheme();
   const navigation = useNavigation();
+  const route = useRoute();
   const [data, setData] = useState(mockData);
-  const [modalVisible, setModalVisible] = useState(false);
   const [filtros, setFiltros] = useState({
-    periodo: 'hoje',
+    periodo: 'todos',
     maquina: 'todas',
     tipo: 'todos',
     status: 'todos',
   });
 
-  const handleDelete = (id) => {
-    setData(prev => ({
-      ...prev,
-      ultimasManutencoes: prev.ultimasManutencoes.filter(m => m.id !== id)
-    }));
-  };
+  useEffect(() => {
+    if (route.params?.filtros) {
+      setFiltros(route.params.filtros);
+      filtrarManutencoes(route.params.filtros);
+    }
+  }, [route.params]);
 
-  const handleEdit = (manutencao) => {
-    navigation.navigate('NewMaintenance', { manutencao });
+  const filtrarManutencoes = (filtros) => {
+    let manutencoesFiltradas = [...mockData.ultimasManutencoes];
+
+    // Filtro por máquina
+    if (filtros.maquina !== 'todas') {
+      manutencoesFiltradas = manutencoesFiltradas.filter(
+        (m) => m.maquina.toLowerCase() === filtros.maquina.toLowerCase()
+      );
+    }
+
+    // Filtro por tipo
+    if (filtros.tipo !== 'todos') {
+      manutencoesFiltradas = manutencoesFiltradas.filter(
+        (m) => m.tipo === filtros.tipo
+      );
+    }
+
+    // Filtro por status
+    if (filtros.status !== 'todos') {
+      manutencoesFiltradas = manutencoesFiltradas.filter(
+        (m) => m.status === filtros.status
+      );
+    }
+
+    // Filtro por período
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    switch (filtros.periodo) {
+      case 'hoje':
+        manutencoesFiltradas = manutencoesFiltradas.filter(
+          (m) => m.data.toDateString() === hoje.toDateString()
+        );
+        break;
+      case 'semana':
+        const inicioSemana = new Date(hoje);
+        inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+        manutencoesFiltradas = manutencoesFiltradas.filter(
+          (m) => m.data >= inicioSemana && m.data <= hoje
+        );
+        break;
+      case 'mes':
+        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        manutencoesFiltradas = manutencoesFiltradas.filter(
+          (m) => m.data >= inicioMes && m.data <= hoje
+        );
+        break;
+      case 'personalizado':
+        if (filtros.dataInicio && filtros.dataFim) {
+          const inicio = new Date(filtros.dataInicio);
+          const fim = new Date(filtros.dataFim);
+          manutencoesFiltradas = manutencoesFiltradas.filter(
+            (m) => m.data >= inicio && m.data <= fim
+          );
+        }
+        break;
+    }
+
+    setData({
+      ...data,
+      ultimasManutencoes: manutencoesFiltradas
+    });
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'concluida':
-        return theme.successColor;
+        return '#4caf50';
       case 'pendente':
-        return theme.warningColor;
+        return '#ff9800';
       case 'cancelada':
-        return theme.errorColor;
+        return '#f44336';
       default:
-        return theme.textColor;
+        return '#666';
     }
   };
 
+  const handleViewDetails = (manutencao) => {
+    const manutencaoSerializado = {
+      ...manutencao,
+      data: manutencao.data.toISOString(),
+      dataFormatada: manutencao.data.toLocaleDateString('pt-BR'),
+      horaFormatada: manutencao.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    navigation.navigate('NewMaintenance', {
+      manutencao: manutencaoSerializado,
+      mode: 'view'
+    });
+  };
+
+  const handleFilterPress = () => {
+    navigation.navigate('FilterMaintenance', { filtros });
+  };
+
   const renderManutencao = (manutencao) => (
-    <Card key={manutencao.id} style={styles.maintenanceCard}>
-      <TouchableOpacity
-        style={styles.maintenanceCardContent}
-        onPress={() => navigation.navigate('MaintenanceDetails', { manutencao })}
-      >
-        <View style={styles.maintenanceHeader}>
-          <Text style={[styles.maintenanceTitle, { color: theme.textColor }]}>
-            {manutencao.maquina}
-          </Text>
-          <View style={styles.status}>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(manutencao.status) }]}>
-              <Text style={styles.statusText}>
-                {manutencao.status === 'concluida' ? 'Concluída' : 'Pendente'}
-              </Text>
-            </View>
+    <TouchableOpacity
+      key={manutencao.id}
+      style={[styles.manutencaoContainer, { backgroundColor: '#fff' }]}
+      onPress={() => handleViewDetails(manutencao)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.manutencaoInfo}>
+        <View style={styles.manutencaoHeader}>
+          <View style={styles.maquinaContainer}>
+            <MaterialIcons
+              name="build"
+              size={20}
+              color="#1a237e"
+              style={styles.maquinaIcon}
+            />
+            <Text style={[styles.manutencaoMaquina, { color: '#000' }]}>
+              {manutencao.maquina}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(manutencao.status) }]}>
+            <Text style={styles.statusText}>
+              {manutencao.status === 'concluida' ? 'Concluída' : 'Pendente'}
+            </Text>
           </View>
         </View>
-        <View style={styles.maintenanceInfo}>
-          <Text style={[styles.maintenanceLabel, { color: theme.textSecondaryColor }]}>
-            Tipo:
-          </Text>
-          <Text style={[styles.maintenanceValue, { color: theme.primaryColor }]}>
-            {manutencao.tipo === 'preventiva' ? 'Preventiva' : 'Corretiva'}
-          </Text>
+        <View style={styles.manutencaoDetalhes}>
+          <View style={styles.detalheItem}>
+            <MaterialIcons
+              name={manutencao.tipo === 'preventiva' ? 'build' : 'warning'}
+              size={16}
+              color="#666"
+            />
+            <Text style={[styles.manutencaoLabel, { color: '#666' }]}>
+              Tipo:
+            </Text>
+            <Text style={[styles.manutencaoValor, { color: '#1a237e' }]}>
+              {manutencao.tipo === 'preventiva' ? 'Preventiva' : 'Corretiva'}
+            </Text>
+          </View>
+          <View style={styles.detalheItem}>
+            <MaterialIcons
+              name="event"
+              size={16}
+              color="#666"
+            />
+            <Text style={[styles.manutencaoLabel, { color: '#666' }]}>
+              Data:
+            </Text>
+            <Text style={[styles.manutencaoValor, { color: '#1a237e' }]}>
+              {manutencao.data.toLocaleDateString('pt-BR')}
+            </Text>
+          </View>
         </View>
-        <View style={styles.maintenanceInfo}>
-          <Text style={[styles.maintenanceLabel, { color: theme.textSecondaryColor }]}>
-            Data:
-          </Text>
-          <Text style={[styles.maintenanceValue, { color: theme.primaryColor }]}>
-            {manutencao.data.toLocaleDateString()}
-          </Text>
-        </View>
-        <View style={styles.maintenanceInfo}>
-          <Text style={[styles.maintenanceLabel, { color: theme.textSecondaryColor }]}>
-            Responsável:
-          </Text>
-          <Text style={[styles.maintenanceValue, { color: theme.primaryColor }]}>
+        <View style={styles.responsavelContainer}>
+          <MaterialIcons
+            name="person"
+            size={16}
+            color="#666"
+          />
+          <Text style={[styles.manutencaoResponsavel, { color: '#666' }]}>
             {manutencao.responsavel}
           </Text>
         </View>
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleEdit(manutencao)}
-          >
-            <MaterialIcons
-              name="edit"
-              size={20}
-              color={theme.primaryColor}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDelete(manutencao.id)}
-          >
-            <MaterialIcons
-              name="delete"
-              size={20}
-              color={theme.errorColor}
-            />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Card>
+      </View>
+      <MaterialIcons
+        name="chevron-right"
+        size={24}
+        color="#666"
+      />
+    </TouchableOpacity>
   );
 
-  const filterSections = [
-    {
-      title: 'Período',
-      options: [
-        { label: 'Hoje', value: 'hoje', selected: filtros.periodo === 'hoje' },
-        { label: 'Semana', value: 'semana', selected: filtros.periodo === 'semana' },
-        { label: 'Mês', value: 'mes', selected: filtros.periodo === 'mes' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, periodo: value })),
-    },
-    {
-      title: 'Máquina',
-      options: [
-        { label: 'Todas', value: 'todas', selected: filtros.maquina === 'todas' },
-        { label: 'Draga 01', value: 'draga01', selected: filtros.maquina === 'draga01' },
-        { label: 'Draga 02', value: 'draga02', selected: filtros.maquina === 'draga02' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, maquina: value })),
-    },
-    {
-      title: 'Tipo',
-      options: [
-        { label: 'Todos', value: 'todos', selected: filtros.tipo === 'todos' },
-        { label: 'Preventiva', value: 'preventiva', selected: filtros.tipo === 'preventiva' },
-        { label: 'Corretiva', value: 'corretiva', selected: filtros.tipo === 'corretiva' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, tipo: value })),
-    },
-    {
-      title: 'Status',
-      options: [
-        { label: 'Todos', value: 'todos', selected: filtros.status === 'todos' },
-        { label: 'Concluída', value: 'concluida', selected: filtros.status === 'concluida' },
-        { label: 'Pendente', value: 'pendente', selected: filtros.status === 'pendente' },
-        { label: 'Cancelada', value: 'cancelada', selected: filtros.status === 'cancelada' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, status: value })),
-    },
-  ];
-
   return (
-    <Container>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.textColor }]}>
-          Manutenções
-        </Text>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <MaterialIcons
-            name="filter-list"
-            size={24}
-            color={theme.primaryColor}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
-            Resumo do Mês
-          </Text>
-          <View style={styles.summaryCards}>
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryCardContent}>
-                <Text style={[styles.summaryTitle, { color: theme.textSecondaryColor }]}>
-                  Total Manutenções
-                </Text>
-                <Text style={[styles.summaryValue, { color: theme.primaryColor }]}>
-                  {data.resumoMes.totalManutencoes}
-                </Text>
-              </View>
-            </Card>
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryCardContent}>
-                <Text style={[styles.summaryTitle, { color: theme.textSecondaryColor }]}>
-                  Preventivas
-                </Text>
-                <Text style={[styles.summaryValue, { color: theme.primaryColor }]}>
-                  {data.resumoMes.preventivas}
-                </Text>
-              </View>
-            </Card>
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryCardContent}>
-                <Text style={[styles.summaryTitle, { color: theme.textSecondaryColor }]}>
-                  Corretivas
-                </Text>
-                <Text style={[styles.summaryValue, { color: theme.primaryColor }]}>
-                  {data.resumoMes.corretivas}
-                </Text>
-              </View>
-            </Card>
-          </View>
-        </View>
-
+    <DefaultPage title="Manutenções">
+      <View style={styles.container}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
-              Últimas Manutenções
-            </Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('NewMaintenance')}
+              style={styles.filterButton}
+              onPress={handleFilterPress}
             >
-              <Text style={[styles.novaManutencao, { color: theme.primaryColor }]}>
-                Nova
+              <MaterialIcons
+                name="filter-list"
+                size={20}
+                color="#1a237e"
+              />
+              <Text style={[styles.filterButtonText, { color: '#1a237e' }]}>
+                Filtros
               </Text>
             </TouchableOpacity>
           </View>
-          {data.ultimasManutencoes.map(renderManutencao)}
+          <ScrollView
+            style={styles.manutencoesScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {data.ultimasManutencoes.map(renderManutencao)}
+          </ScrollView>
         </View>
-      </View>
 
-      <FilterModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onApply={() => {
-          // Aplicar filtros aqui
-          setModalVisible(false);
-        }}
-        title="Filtros"
-        sections={filterSections}
-      />
-    </Container>
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: '#1a237e' }]}
+          onPress={() => navigation.navigate('NewMaintenance')}
+        >
+          <MaterialIcons
+            name="add"
+            size={24}
+            color="white"
+          />
+        </TouchableOpacity>
+      </View>
+    </DefaultPage>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    padding: 24,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  content: {
-    padding: 24,
-    paddingTop: 0,
+    padding: 4,
   },
   section: {
-    marginBottom: 24,
+    flex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  novaManutencao: {
-    fontSize: 14,
-  },
-  summaryCards: {
+  filterButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 24,
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
-  summaryCard: {
+  filterButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  manutencoesScroll: {
     flex: 1,
-    minWidth: '45%',
   },
-  summaryCardContent: {
+  scrollContent: {
+    paddingBottom: 80,
+  },
+  manutencaoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  summaryTitle: {
-    fontSize: 14,
-    marginBottom: 8,
+  manutencaoInfo: {
+    flex: 1,
   },
-  summaryValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  maintenanceCard: {
-    marginBottom: 16,
-  },
-  maintenanceCardContent: {
-    padding: 16,
-  },
-  maintenanceHeader: {
+  manutencaoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  maintenanceTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  maintenanceDate: {
-    fontSize: 14,
-  },
-  maintenanceInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  maintenanceLabel: {
-    fontSize: 14,
-  },
-  maintenanceValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  status: {
+  maquinaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
-  statusText: {
-    fontSize: 14,
-    marginLeft: 8,
+  maquinaIcon: {
+    marginRight: 8,
+  },
+  manutencaoMaquina: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  statusText: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '500',
+  },
+  manutencaoDetalhes: {
     gap: 8,
-    marginTop: 12,
+    marginBottom: 12,
   },
-  actionButton: {
-    padding: 8,
+  detalheItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  filterButton: {
-    padding: 8,
+  manutencaoLabel: {
+    fontSize: 14,
   },
-}); 
+  manutencaoValor: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  responsavelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  manutencaoResponsavel: {
+    fontSize: 14,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+});

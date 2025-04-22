@@ -1,295 +1,524 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { format } from 'date-fns';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import Card from '../../components/common/Card';
-import Container from '../../components/common/Container';
+import DefaultPage from '../../components/common/DefaultPage';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+
+const tiposManutencao = [
+  { id: 'preventiva', label: 'Preventiva', icon: 'build' },
+  { id: 'corretiva', label: 'Corretiva', icon: 'warning' },
+];
+
+const statusManutencao = [
+  { id: 'pendente', label: 'Pendente', icon: 'schedule' },
+  { id: 'concluida', label: 'Concluída', icon: 'check-circle' },
+  { id: 'cancelada', label: 'Cancelada', icon: 'cancel' },
+];
 
 export default function NewMaintenancePage() {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const navigation = useNavigation();
+  const route = useRoute();
+  const { manutencao, mode = 'new' } = route.params || {};
+
   const [formData, setFormData] = useState({
     maquina: '',
     tipo: '',
+    status: 'pendente',
     data: new Date(),
     descricao: '',
-    responsavel: 'Usuário Logado',
-    proximaRevisao: null,
-    custo: '',
+    observacoes: '',
   });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (manutencao) {
+      setFormData({
+        maquina: manutencao.maquina || '',
+        tipo: manutencao.tipo || '',
+        status: manutencao.status || 'pendente',
+        data: manutencao.data ? new Date(manutencao.data) : new Date(),
+        descricao: manutencao.descricao || '',
+        observacoes: manutencao.observacoes || '',
+      });
+    }
+  }, [manutencao]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
     if (!formData.maquina) {
-      Alert.alert('Erro', 'Selecione uma máquina');
-      return;
+      newErrors.maquina = 'Selecione uma máquina';
     }
+
     if (!formData.tipo) {
-      Alert.alert('Erro', 'Selecione o tipo de manutenção');
-      return;
+      newErrors.tipo = 'Selecione o tipo de manutenção';
     }
+
     if (!formData.descricao) {
-      Alert.alert('Erro', 'Descreva a manutenção realizada');
+      newErrors.descricao = 'Informe uma descrição';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       return;
     }
 
+    setIsLoading(true);
+    try {
+      // TODO: Implementar chamada à API
+      const dataToSave = {
+        ...formData,
+        responsavel: user?.nome,
+      };
+
+      console.log('Dados a serem salvos:', dataToSave);
+
+      // Simulando chamada à API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      Alert.alert(
+        'Sucesso',
+        mode === 'new'
+          ? 'Manutenção registrada com sucesso!'
+          : 'Manutenção atualizada com sucesso!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error) {
+      console.error('Erro ao salvar manutenção:', error);
+      Alert.alert(
+        'Erro',
+        'Ocorreu um erro ao salvar a manutenção. Tente novamente.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
     Alert.alert(
-      'Sucesso',
-      'Manutenção registrada com sucesso!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
+      'Excluir Manutenção',
+      'Tem certeza que deseja excluir esta manutenção? Esta ação não pode ser desfeita.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+          onPress: () => { },
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // TODO: Implementar chamada à API para exclusão
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              Alert.alert(
+                'Sucesso',
+                'Manutenção excluída com sucesso!',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => navigation.goBack(),
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Erro ao excluir manutenção:', error);
+              Alert.alert(
+                'Erro',
+                'Ocorreu um erro ao excluir a manutenção. Tente novamente.',
+                [
+                  {
+                    text: 'OK',
+                    style: 'cancel',
+                  }
+                ]
+              );
+            } finally {
+              setIsLoading(false);
+            }
+          },
+        },
+      ],
+      {
+        cancelable: true,
+      }
     );
   };
 
-  const renderInput = (label, value, onChange, placeholder, keyboardType = 'default', icon) => (
-    <View style={styles.inputContainer}>
-      <View style={styles.labelContainer}>
-        <MaterialIcons name={icon} size={20} color={theme.textSecondaryColor} />
-        <Text style={[styles.label, { color: theme.textSecondaryColor }]}>{label}</Text>
-      </View>
-      <TextInput
-        style={[styles.input, {
-          backgroundColor: theme.backgroundColor,
-          color: theme.textColor,
-          borderColor: theme.borderColor,
-        }]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={theme.textSecondaryColor}
-        keyboardType={keyboardType}
-      />
-    </View>
-  );
+  const isViewMode = mode === 'view';
+  const title = isViewMode
+    ? 'Detalhes'
+    : mode === 'edit'
+      ? 'Editar'
+      : 'Nova';
 
   return (
-    <Container>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={theme.textColor} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.textColor }]}>
-          Nova Manutenção
+    <DefaultPage title={title} backButton>
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Máquina *
         </Text>
+        <TouchableOpacity
+          style={[styles.inputContainer, {
+            backgroundColor: theme.inputBackgroundColor,
+            borderColor: errors.maquina ? '#d32f2f' : theme.borderColor,
+            opacity: isViewMode ? 0.7 : 1,
+          }]}
+          onPress={() => {
+            if (isViewMode) return;
+            // TODO: Implementar busca de máquinas
+          }}
+        >
+          <MaterialIcons name="build" size={24} color={theme.textSecondaryColor} style={styles.inputIcon} />
+          <Text style={[styles.inputText, { color: formData.maquina ? theme.textColor : theme.placeholderColor }]}>
+            {formData.maquina || 'Selecione a máquina'}
+          </Text>
+          {!isViewMode && (
+            <MaterialIcons name="arrow-drop-down" size={24} color={theme.textSecondaryColor} />
+          )}
+        </TouchableOpacity>
+        {errors.maquina && <Text style={styles.errorText}>{errors.maquina}</Text>}
       </View>
 
-      <ScrollView style={styles.form}>
-        <Card style={styles.formCard}>
-          <View style={styles.inputContainer}>
-            <View style={styles.labelContainer}>
-              <MaterialIcons name="build" size={20} color={theme.textSecondaryColor} />
-              <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Máquina</Text>
-            </View>
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Tipo de Manutenção *
+        </Text>
+        <View style={styles.tipoContainer}>
+          {tiposManutencao.map((tipo) => (
             <TouchableOpacity
-              style={[styles.select, {
-                backgroundColor: theme.backgroundColor,
-                borderColor: theme.borderColor,
-              }]}
-              onPress={() => {/* Implementar seleção de máquina */ }}
+              key={tipo.id}
+              style={[
+                styles.tipoButton,
+                formData.tipo === tipo.id && styles.tipoButtonSelected,
+                { borderColor: theme.primaryColor },
+                isViewMode && { opacity: 0.7 },
+              ]}
+              onPress={() => {
+                if (isViewMode) return;
+                setFormData({ ...formData, tipo: tipo.id });
+              }}
             >
-              <Text style={[styles.selectText, { color: formData.maquina ? theme.textColor : theme.textSecondaryColor }]}>
-                {formData.maquina || 'Selecione uma máquina'}
-              </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color={theme.textColor} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.labelContainer}>
-              <MaterialIcons name="settings" size={20} color={theme.textSecondaryColor} />
-              <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Tipo de Manutenção</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.select, {
-                backgroundColor: theme.backgroundColor,
-                borderColor: theme.borderColor,
-              }]}
-              onPress={() => {/* Implementar seleção de tipo */ }}
-            >
-              <Text style={[styles.selectText, { color: formData.tipo ? theme.textColor : theme.textSecondaryColor }]}>
-                {formData.tipo || 'Selecione o tipo'}
-              </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color={theme.textColor} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.labelContainer}>
-              <MaterialIcons name="event" size={20} color={theme.textSecondaryColor} />
-              <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Data da Manutenção</Text>
-            </View>
-            <TextInput
-              style={[styles.select, {
-                backgroundColor: theme.backgroundColor,
-                color: theme.textColor,
-                borderColor: theme.borderColor,
-              }]}
-              value={formData.data.toLocaleDateString('pt-BR')}
-              editable={false}
-            />
-          </View>
-
-          {renderInput(
-            'Descrição',
-            formData.descricao,
-            (text) => setFormData({ ...formData, descricao: text }),
-            'Descreva a manutenção realizada',
-            'default',
-            'description'
-          )}
-
-          {renderInput(
-            'Responsável',
-            formData.responsavel,
-            (text) => setFormData({ ...formData, responsavel: text }),
-            'Responsável pela manutenção',
-            'default',
-            'person'
-          )}
-
-          {formData.tipo === 'preventiva' && (
-            <View style={styles.inputContainer}>
-              <View style={styles.labelContainer}>
-                <MaterialIcons name="schedule" size={20} color={theme.textSecondaryColor} />
-                <Text style={[styles.label, { color: theme.textSecondaryColor }]}>Próxima Revisão</Text>
-              </View>
-              <TextInput
-                style={[styles.select, {
-                  backgroundColor: theme.backgroundColor,
-                  color: theme.textColor,
-                  borderColor: theme.borderColor,
-                }]}
-                value={formData.proximaRevisao ? formData.proximaRevisao.toLocaleDateString('pt-BR') : ''}
-                placeholder="Selecione a data"
-                placeholderTextColor={theme.textSecondaryColor}
-                editable={false}
+              <MaterialIcons
+                name={tipo.icon}
+                size={24}
+                color={formData.tipo === tipo.id ? '#fff' : theme.primaryColor}
+                style={styles.tipoIcon}
               />
-            </View>
-          )}
+              <Text
+                style={[
+                  styles.tipoText,
+                  formData.tipo === tipo.id && styles.tipoTextSelected,
+                  { color: formData.tipo === tipo.id ? '#fff' : theme.primaryColor },
+                ]}
+              >
+                {tipo.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {errors.tipo && <Text style={styles.errorText}>{errors.tipo}</Text>}
+      </View>
 
-          {renderInput(
-            'Custo (opcional)',
-            formData.custo,
-            (text) => setFormData({ ...formData, custo: text }),
-            'R$ 0,00',
-            'numeric',
-            'attach-money'
-          )}
-        </Card>
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Status
+        </Text>
+        <View style={styles.tipoContainer}>
+          {statusManutencao.map((status) => (
+            <TouchableOpacity
+              key={status.id}
+              style={[
+                styles.tipoButton,
+                formData.status === status.id && styles.tipoButtonSelected,
+                { borderColor: theme.primaryColor },
+                isViewMode && { opacity: 0.7 },
+              ]}
+              onPress={() => {
+                if (isViewMode) return;
+                setFormData({ ...formData, status: status.id });
+              }}
+            >
+              <MaterialIcons
+                name={status.icon}
+                size={24}
+                color={formData.status === status.id ? '#fff' : theme.primaryColor}
+                style={styles.tipoIcon}
+              />
+              <Text
+                style={[
+                  styles.tipoText,
+                  formData.status === status.id && styles.tipoTextSelected,
+                  { color: formData.status === status.id ? '#fff' : theme.primaryColor },
+                ]}
+              >
+                {status.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
-        <View style={styles.footer}>
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Data e Hora
+        </Text>
+        <View style={[styles.inputContainer, {
+          backgroundColor: theme.inputBackgroundColor,
+          borderColor: theme.borderColor,
+          opacity: isViewMode ? 0.7 : 1,
+        }]}>
+          <MaterialIcons name="event" size={24} color={theme.textSecondaryColor} style={styles.inputIcon} />
+          <Text style={[styles.inputText, { color: theme.textColor }]}>
+            {format(formData.data, "dd/MM/yyyy HH:mm")}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Descrição *
+        </Text>
+        <View style={[styles.inputContainer, {
+          backgroundColor: theme.inputBackgroundColor,
+          borderColor: errors.descricao ? '#d32f2f' : theme.borderColor,
+          height: 100,
+          opacity: isViewMode ? 0.7 : 1,
+        }]}>
+          <MaterialIcons name="description" size={24} color={theme.textSecondaryColor} style={styles.inputIcon} />
+          {isViewMode ? (
+            <Text style={[styles.inputText, { color: theme.textColor }]}>
+              {formData.descricao || 'Nenhuma descrição'}
+            </Text>
+          ) : (
+            <TextInput
+              style={[styles.input, {
+                color: theme.textColor,
+                height: '100%',
+                textAlignVertical: 'top',
+              }]}
+              placeholder="Descreva a manutenção realizada"
+              placeholderTextColor={theme.placeholderColor}
+              multiline
+              value={formData.descricao}
+              onChangeText={(text) => setFormData({ ...formData, descricao: text })}
+            />
+          )}
+        </View>
+        {errors.descricao && <Text style={styles.errorText}>{errors.descricao}</Text>}
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Observações
+        </Text>
+        <View style={[styles.inputContainer, {
+          backgroundColor: theme.inputBackgroundColor,
+          borderColor: theme.borderColor,
+          height: 100,
+          opacity: isViewMode ? 0.7 : 1,
+        }]}>
+          <MaterialIcons name="note" size={24} color={theme.textSecondaryColor} style={styles.inputIcon} />
+          {isViewMode ? (
+            <Text style={[styles.inputText, { color: theme.textColor }]}>
+              {formData.observacoes || 'Nenhuma observação'}
+            </Text>
+          ) : (
+            <TextInput
+              style={[styles.input, {
+                color: theme.textColor,
+                height: '100%',
+                textAlignVertical: 'top',
+              }]}
+              placeholder="Adicione observações relevantes"
+              placeholderTextColor={theme.placeholderColor}
+              multiline
+              value={formData.observacoes}
+              onChangeText={(text) => setFormData({ ...formData, observacoes: text })}
+            />
+          )}
+        </View>
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
+          Responsável
+        </Text>
+        <View style={[styles.inputContainer, {
+          backgroundColor: theme.inputBackgroundColor,
+          borderColor: theme.borderColor,
+          opacity: 0.7,
+        }]}>
+          <MaterialIcons name="person" size={24} color={theme.textSecondaryColor} style={styles.inputIcon} />
+          <Text style={[styles.inputText, { color: theme.textColor }]}>
+            {user?.nome || 'Usuário não identificado'}
+          </Text>
+        </View>
+      </View>
+
+      {!isViewMode && (
+        <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.cancelButton, { backgroundColor: theme.backgroundColor, borderColor: theme.borderColor }]}
+            style={[styles.button, styles.cancelButton]}
             onPress={() => navigation.goBack()}
+            disabled={isLoading}
           >
-            <Text style={[styles.cancelButtonText, { color: theme.textColor }]}>
-              Cancelar
+            <MaterialIcons name="close" size={20} color="#666" />
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#1a237e' }]}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            <MaterialIcons name="check" size={20} color="white" />
+            <Text style={styles.submitButtonText}>
+              {isLoading ? 'Salvando...' : 'Salvar'}
             </Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {isViewMode && (
+        <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.submitButton, { backgroundColor: theme.primaryColor }]}
-            onPress={handleSubmit}
+            style={[styles.button, styles.cancelButton]}
+            onPress={() => navigation.goBack()}
           >
-            <Text style={styles.submitButtonText}>Salvar</Text>
+            <MaterialIcons name="arrow-back" size={20} color="#666" />
+            <Text style={styles.cancelButtonText}>Voltar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#1a237e' }]}
+            onPress={() => navigation.navigate('NewMaintenance', {
+              manutencao,
+              mode: 'edit'
+            })}
+          >
+            <MaterialIcons name="edit" size={20} color="white" />
+            <Text style={styles.submitButtonText}>Editar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#d32f2f' }]}
+            onPress={handleDelete}
+            disabled={isLoading}
+          >
+            <MaterialIcons name="delete" size={20} color="white" />
+            <Text style={styles.submitButtonText}>
+              {isLoading ? 'Excluindo...' : 'Excluir'}
+            </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-    </Container>
+      )}
+    </DefaultPage>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  form: {
-    flex: 1,
-    padding: 20,
-  },
-  formCard: {
+  formGroup: {
     marginBottom: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    height: 48,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+  },
+  inputText: {
+    flex: 1,
     fontSize: 16,
   },
-  select: {
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  tipoContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tipoButton: {
+    flex: 1,
     height: 48,
     borderRadius: 8,
-    paddingHorizontal: 16,
     borderWidth: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectText: {
-    fontSize: 16,
-  },
-  footer: {
+    justifyContent: 'center',
     flexDirection: 'row',
-    gap: 16,
+  },
+  tipoIcon: {
+    marginRight: 8,
+  },
+  tipoButtonSelected: {
+    backgroundColor: '#1a237e',
+  },
+  tipoText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  tipoTextSelected: {
+    color: '#fff',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  button: {
+    flex: 1,
+    height: 48,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   cancelButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   cancelButtonText: {
+    color: '#666',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  submitButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    fontWeight: '500',
   },
   submitButtonText: {
-    color: '#FFF',
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
 }); 
