@@ -20,45 +20,45 @@ import {
 } from '../../services/maquinas';
 
 const tiposMaquina = [
-    { id: 'draga', label: 'Draga', icon: 'dredger' },
-    { id: 'caminhao', label: 'Caminhão', icon: 'local-shipping' },
-    { id: 'pa', label: 'Pá Carregadeira', icon: 'construction' },
-    { id: 'outro', label: 'Outro', icon: 'build' },
+    { id: 'DRAGA', label: 'Draga', icon: 'construction' },
+    { id: 'CAMINHAO', label: 'Caminhão', icon: 'local-shipping' },
+    { id: 'PA_CARREGADEIRA', label: 'Pá Carregadeira', icon: 'construction' },
+    { id: 'OUTRO', label: 'Outro', icon: 'build' },
 ];
 
 export default function NewMachinePage() {
     const { theme } = useTheme();
     const navigation = useNavigation();
     const route = useRoute();
-    const { maquina, mode } = route.params || {};
-
     const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState({
+    const [maquina, setMaquina] = useState({
         nome: '',
-        tipo: '',
-        descricao: '',
-        status: 'ativo',
+        tipo: 'DRAGA',
+        codigoBomba: '',
+        dataFabricacao: new Date().toISOString().split('T')[0],
     });
 
     useEffect(() => {
-        if (maquina) {
-            setFormData({
-                nome: maquina.nome,
-                tipo: maquina.tipo,
-                descricao: maquina.descricao,
-                status: maquina.status,
-            });
+        if (route.params?.maquina) {
+            setMaquina(route.params.maquina);
         }
-    }, [maquina]);
+    }, [route.params]);
 
-    const handleSubmit = async () => {
+    const handleSalvar = async () => {
         try {
             setIsLoading(true);
-            if (mode === 'edit' && maquina) {
-                await atualizarMaquina(maquina.id, formData);
+
+            // Converter a data para o formato ISO antes de enviar
+            const dadosParaEnviar = {
+                ...maquina,
+                dataFabricacao: new Date(maquina.dataFabricacao).toISOString()
+            };
+
+            if (route.params?.maquina) {
+                await atualizarMaquina(maquina.id, dadosParaEnviar);
                 Alert.alert('Sucesso', 'Máquina atualizada com sucesso!');
             } else {
-                await criarMaquina(formData);
+                await criarMaquina(dadosParaEnviar);
                 Alert.alert('Sucesso', 'Máquina criada com sucesso!');
             }
             navigation.goBack();
@@ -70,17 +70,12 @@ export default function NewMachinePage() {
         }
     };
 
-    const handleDelete = async () => {
-        if (!maquina) return;
-
+    const handleExcluir = async () => {
         Alert.alert(
-            'Confirmar exclusão',
+            'Confirmar Exclusão',
             'Tem certeza que deseja excluir esta máquina?',
             [
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                },
+                { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Excluir',
                     style: 'destructive',
@@ -102,198 +97,103 @@ export default function NewMachinePage() {
         );
     };
 
-    const isFormValid = () => {
-        return formData.nome.trim() !== '' && formData.tipo.trim() !== '';
-    };
-
     return (
-        <DefaultPage title={mode === 'edit' ? 'Editar Máquina' : 'Nova Máquina'}>
-            <View style={styles.container}>
-                <ScrollView
-                    style={styles.form}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.formContent}
-                >
-                    <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: theme.textColor }]}>Nome</Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                {
-                                    backgroundColor: theme.inputBackground,
-                                    color: theme.textColor,
-                                    borderColor: theme.borderColor,
-                                },
-                            ]}
-                            value={formData.nome}
-                            onChangeText={(text) => setFormData({ ...formData, nome: text })}
-                            placeholder="Digite o nome da máquina"
-                            placeholderTextColor={theme.textSecondaryColor}
-                            editable={mode !== 'view'}
-                        />
-                    </View>
+        <DefaultPage title={route.params?.maquina ? 'Editar Máquina' : 'Nova Máquina'}>
+            <ScrollView style={styles.container}>
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: theme.textColor }]}>Nome</Text>
+                    <TextInput
+                        style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor }]}
+                        value={maquina.nome}
+                        onChangeText={(text) => setMaquina({ ...maquina, nome: text })}
+                        placeholder="Digite o nome da máquina"
+                        placeholderTextColor={theme.textSecondaryColor}
+                    />
+                </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: theme.textColor }]}>Tipo</Text>
-                        <View style={styles.tiposContainer}>
-                            {tiposMaquina.map((tipo) => (
-                                <TouchableOpacity
-                                    key={tipo.id}
-                                    style={[
-                                        styles.tipoButton,
-                                        {
-                                            backgroundColor:
-                                                formData.tipo === tipo.id
-                                                    ? theme.primaryColor
-                                                    : theme.inputBackground,
-                                            borderColor: theme.borderColor,
-                                        },
-                                    ]}
-                                    onPress={() => setFormData({ ...formData, tipo: tipo.id })}
-                                    disabled={mode === 'view'}
-                                >
-                                    <MaterialIcons
-                                        name={tipo.icon}
-                                        size={24}
-                                        color={formData.tipo === tipo.id ? '#fff' : theme.textColor}
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.tipoText,
-                                            {
-                                                color:
-                                                    formData.tipo === tipo.id ? '#fff' : theme.textColor,
-                                            },
-                                        ]}
-                                    >
-                                        {tipo.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: theme.textColor }]}>Descrição</Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                styles.textArea,
-                                {
-                                    backgroundColor: theme.inputBackground,
-                                    color: theme.textColor,
-                                    borderColor: theme.borderColor,
-                                },
-                            ]}
-                            value={formData.descricao}
-                            onChangeText={(text) => setFormData({ ...formData, descricao: text })}
-                            placeholder="Digite uma descrição para a máquina"
-                            placeholderTextColor={theme.textSecondaryColor}
-                            multiline
-                            numberOfLines={4}
-                            editable={mode !== 'view'}
-                        />
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: theme.textColor }]}>Status</Text>
-                        <View style={styles.statusContainer}>
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: theme.textColor }]}>Tipo</Text>
+                    <View style={[styles.tipoContainer, { borderColor: theme.borderColor }]}>
+                        {tiposMaquina.map((tipo) => (
                             <TouchableOpacity
+                                key={tipo.id}
                                 style={[
-                                    styles.statusButton,
+                                    styles.tipoButton,
                                     {
-                                        backgroundColor:
-                                            formData.status === 'ativo'
-                                                ? theme.primaryColor
-                                                : theme.inputBackground,
+                                        backgroundColor: maquina.tipo === tipo.id ? theme.primaryColor : 'transparent',
                                         borderColor: theme.borderColor,
                                     },
                                 ]}
-                                onPress={() => setFormData({ ...formData, status: 'ativo' })}
-                                disabled={mode === 'view'}
+                                onPress={() => setMaquina({ ...maquina, tipo: tipo.id })}
                             >
                                 <MaterialIcons
-                                    name="check-circle"
-                                    size={24}
-                                    color={formData.status === 'ativo' ? '#fff' : theme.textColor}
+                                    name={tipo.icon}
+                                    size={20}
+                                    color={maquina.tipo === tipo.id ? 'white' : theme.textColor}
                                 />
                                 <Text
                                     style={[
-                                        styles.statusText,
-                                        {
-                                            color:
-                                                formData.status === 'ativo' ? '#fff' : theme.textColor,
-                                        },
+                                        styles.tipoButtonText,
+                                        { color: maquina.tipo === tipo.id ? 'white' : theme.textColor },
                                     ]}
                                 >
-                                    Ativo
+                                    {tipo.label}
                                 </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[
-                                    styles.statusButton,
-                                    {
-                                        backgroundColor:
-                                            formData.status === 'inativo'
-                                                ? theme.primaryColor
-                                                : theme.inputBackground,
-                                        borderColor: theme.borderColor,
-                                    },
-                                ]}
-                                onPress={() => setFormData({ ...formData, status: 'inativo' })}
-                                disabled={mode === 'view'}
-                            >
-                                <Text
-                                    style={[
-                                        styles.statusButtonText,
-                                        {
-                                            color:
-                                                formData.status === 'inativo' ? '#fff' : theme.textColor,
-                                        },
-                                    ]}
-                                >
-                                    Inativo
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                        ))}
                     </View>
-                </ScrollView>
+                </View>
 
-                {mode !== 'view' && (
-                    <View style={styles.footer}>
-                        {mode === 'edit' && (
-                            <TouchableOpacity
-                                style={[styles.button, styles.deleteButton]}
-                                onPress={handleDelete}
-                                disabled={isLoading}
-                            >
-                                <MaterialIcons name="delete" size={24} color="#fff" />
-                                <Text style={styles.buttonText}>Excluir</Text>
-                            </TouchableOpacity>
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: theme.textColor }]}>Código da Bomba</Text>
+                    <TextInput
+                        style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor }]}
+                        value={maquina.codigoBomba}
+                        onChangeText={(text) => setMaquina({ ...maquina, codigoBomba: text })}
+                        placeholder="Digite o código da bomba"
+                        placeholderTextColor={theme.textSecondaryColor}
+                    />
+                </View>
+
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: theme.textColor }]}>Data de Fabricação</Text>
+                    <TextInput
+                        style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor }]}
+                        value={maquina.dataFabricacao}
+                        onChangeText={(text) => setMaquina({ ...maquina, dataFabricacao: text })}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={theme.textSecondaryColor}
+                    />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: theme.primaryColor }]}
+                        onPress={handleSalvar}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.buttonText}>Salvar</Text>
                         )}
-                        <TouchableOpacity
-                            style={[
-                                styles.button,
-                                styles.saveButton,
-                                { backgroundColor: theme.primaryColor },
-                            ]}
-                            onPress={handleSubmit}
-                            disabled={isLoading || !isFormValid()}
-                        >
-                            <MaterialIcons name="save" size={24} color="#fff" />
-                            <Text style={styles.buttonText}>
-                                {mode === 'edit' ? 'Salvar' : 'Criar'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+                    </TouchableOpacity>
 
-                {isLoading && (
-                    <View style={styles.loadingOverlay}>
-                        <ActivityIndicator size="large" color={theme.primaryColor} />
-                    </View>
-                )}
-            </View>
+                    {route.params?.maquina && (
+                        <TouchableOpacity
+                            style={[styles.button, styles.deleteButton, { backgroundColor: '#dc3545' }]}
+                            onPress={handleExcluir}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text style={styles.buttonText}>Excluir</Text>
+                            )}
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </ScrollView>
         </DefaultPage>
     );
 }
@@ -303,79 +203,55 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
     },
-    form: {
-        flex: 1,
-    },
-    formContent: {
-        paddingBottom: 80,
-    },
-    inputGroup: {
+    formGroup: {
         marginBottom: 16,
     },
     label: {
         fontSize: 16,
-        fontWeight: '500',
         marginBottom: 8,
+        fontWeight: 'bold',
     },
     input: {
-        height: 48,
         borderWidth: 1,
         borderRadius: 8,
-        paddingHorizontal: 16,
+        padding: 12,
         fontSize: 16,
     },
-    textArea: {
-        height: 120,
-        textAlignVertical: 'top',
-        paddingTop: 12,
-    },
-    statusContainer: {
+    tipoContainer: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         gap: 8,
     },
-    statusButton: {
-        flex: 1,
-        height: 48,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statusButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 16,
-        left: 16,
-        right: 16,
+    tipoButton: {
         flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        flex: 1,
+        minWidth: '45%',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    tipoButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    buttonContainer: {
         gap: 16,
+        marginTop: 24,
     },
     button: {
-        flex: 1,
-        height: 56,
+        padding: 16,
         borderRadius: 8,
-        flexDirection: 'row',
-        justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
     },
     deleteButton: {
-        backgroundColor: '#f44336',
-    },
-    saveButton: {
-        backgroundColor: '#2196f3',
+        backgroundColor: '#dc3545',
     },
     buttonText: {
-        color: '#fff',
+        color: 'white',
         fontSize: 16,
-        fontWeight: '500',
-    },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        fontWeight: 'bold',
     },
 }); 

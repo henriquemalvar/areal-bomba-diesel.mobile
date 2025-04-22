@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import DefaultPage from '../../components/common/DefaultPage';
-import { responsaveis } from '../../constants/fuel';
 import { useTheme } from '../../contexts/ThemeContext';
 import { listarAbastecimentos } from '../../services/abastecimentos';
 
@@ -19,69 +18,34 @@ export default function FuelPage() {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
-  const [data, setData] = useState({
-    resumoMes: {
-      totalAbastecimentos: 0,
-      litrosTotais: 0,
-      mediaDiaria: 0,
-    },
-    ultimosAbastecimentos: [],
-  });
   const [isLoading, setIsLoading] = useState(true);
+  const [abastecimentos, setAbastecimentos] = useState([]);
   const [filtros, setFiltros] = useState({
-    periodo: 'todos',
-    maquina: 'todas',
-    tipo: 'todos',
-    responsavel: 'todos',
     dataInicio: '',
     dataFim: '',
+    maquinarioId: '',
+    tipoMaquinario: '',
+    nomeMaquinario: '',
+    bombaId: '',
+    usuarioId: '',
   });
-
-  useEffect(() => {
-    carregarAbastecimentos();
-  }, []);
 
   useEffect(() => {
     if (route.params?.filtros) {
       setFiltros(route.params.filtros);
-      filtrarAbastecimentos(route.params.filtros);
     }
   }, [route.params]);
+
+  useEffect(() => {
+    carregarAbastecimentos();
+  }, [filtros]);
 
   const carregarAbastecimentos = async () => {
     try {
       setIsLoading(true);
-      const abastecimentos = await listarAbastecimentos();
-
-      // Transformar os dados da API para o formato esperado pelo componente
-      const abastecimentosFormatados = abastecimentos.map(abastecimento => ({
-        id: abastecimento.id.toString(),
-        maquina: abastecimento.maquinario?.nome || 'Máquina não especificada',
-        quantidade: abastecimento.quantidade,
-        data: new Date(abastecimento.data),
-        tipo: abastecimento.tipo,
-        responsavel: abastecimento.usuario?.nome || 'Responsável não especificado',
-      }));
-
-      // Calcular resumo do mês
-      const hoje = new Date();
-      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      const abastecimentosMes = abastecimentosFormatados.filter(
-        a => a.data >= inicioMes && a.data <= hoje
-      );
-
-      const resumoMes = {
-        totalAbastecimentos: abastecimentosMes.length,
-        litrosTotais: abastecimentosMes.reduce((total, a) => total + a.quantidade, 0),
-        mediaDiaria: abastecimentosMes.length > 0
-          ? abastecimentosMes.reduce((total, a) => total + a.quantidade, 0) / abastecimentosMes.length
-          : 0,
-      };
-
-      setData({
-        resumoMes,
-        ultimosAbastecimentos: abastecimentosFormatados,
-      });
+      const dados = await listarAbastecimentos(filtros);
+      console.log('Dados dos abastecimentos:', JSON.stringify(dados, null, 2));
+      setAbastecimentos(dados);
     } catch (error) {
       console.error('Erro ao carregar abastecimentos:', error);
       Alert.alert('Erro', 'Não foi possível carregar os abastecimentos. Tente novamente.');
@@ -90,83 +54,9 @@ export default function FuelPage() {
     }
   };
 
-  const filtrarAbastecimentos = (filtros) => {
-    let abastecimentosFiltrados = [...data.ultimosAbastecimentos];
-
-    // Filtro por máquina
-    if (filtros.maquina !== 'todas') {
-      abastecimentosFiltrados = abastecimentosFiltrados.filter(
-        (a) => a.maquina.toLowerCase() === filtros.maquina.toLowerCase()
-      );
-    }
-
-    // Filtro por tipo
-    if (filtros.tipo !== 'todos') {
-      abastecimentosFiltrados = abastecimentosFiltrados.filter(
-        (a) => a.tipo === filtros.tipo
-      );
-    }
-
-    // Filtro por responsável
-    if (filtros.responsavel !== 'todos') {
-      const responsavelSelecionado = responsaveis.find(r => r.id === filtros.responsavel);
-      if (responsavelSelecionado) {
-        abastecimentosFiltrados = abastecimentosFiltrados.filter(
-          (a) => a.responsavel.toLowerCase() === responsavelSelecionado.label.toLowerCase()
-        );
-      }
-    }
-
-    // Filtro por período
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    switch (filtros.periodo) {
-      case 'hoje':
-        abastecimentosFiltrados = abastecimentosFiltrados.filter(
-          (a) => a.data.toDateString() === hoje.toDateString()
-        );
-        break;
-      case 'semana':
-        const inicioSemana = new Date(hoje);
-        inicioSemana.setDate(hoje.getDate() - hoje.getDay());
-        abastecimentosFiltrados = abastecimentosFiltrados.filter(
-          (a) => a.data >= inicioSemana && a.data <= hoje
-        );
-        break;
-      case 'mes':
-        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        abastecimentosFiltrados = abastecimentosFiltrados.filter(
-          (a) => a.data >= inicioMes && a.data <= hoje
-        );
-        break;
-      case 'personalizado':
-        if (filtros.dataInicio && filtros.dataFim) {
-          const inicio = new Date(filtros.dataInicio);
-          const fim = new Date(filtros.dataFim);
-          abastecimentosFiltrados = abastecimentosFiltrados.filter(
-            (a) => a.data >= inicio && a.data <= fim
-          );
-        }
-        break;
-    }
-
-    setData({
-      ...data,
-      ultimosAbastecimentos: abastecimentosFiltrados
-    });
-  };
-
   const handleViewDetails = (abastecimento) => {
-    const abastecimentoSerializado = {
-      ...abastecimento,
-      data: abastecimento.data.toISOString(),
-      dataFormatada: abastecimento.data.toLocaleDateString('pt-BR'),
-      horaFormatada: abastecimento.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    };
-
     navigation.navigate('NewFuel', {
-      abastecimento: abastecimentoSerializado,
+      abastecimento,
       mode: 'view'
     });
   };
@@ -188,11 +78,11 @@ export default function FuelPage() {
               style={styles.maquinaIcon}
             />
             <Text style={[styles.abastecimentoMaquina, { color: theme.textColor }]}>
-              {abastecimento.maquina}
+              {abastecimento.maquinario.nome}
             </Text>
           </View>
           <Text style={[styles.abastecimentoData, { color: theme.textSecondaryColor }]}>
-            {abastecimento.data.toLocaleDateString('pt-BR')}
+            {new Date(abastecimento.data).toLocaleDateString('pt-BR')}
           </Text>
         </View>
         <View style={styles.abastecimentoDetalhes}>
@@ -206,20 +96,20 @@ export default function FuelPage() {
               Quantidade:
             </Text>
             <Text style={[styles.abastecimentoValor, { color: theme.primaryColor }]}>
-              {abastecimento.quantidade}L
+              {abastecimento.litros}L
             </Text>
           </View>
           <View style={styles.detalheItem}>
             <MaterialIcons
-              name={abastecimento.tipo === 'posto' ? 'local-gas-station' : 'inventory'}
+              name="local-gas-station"
               size={16}
               color={theme.textSecondaryColor}
             />
             <Text style={[styles.abastecimentoLabel, { color: theme.textSecondaryColor }]}>
-              Tipo:
+              Bomba:
             </Text>
             <Text style={[styles.abastecimentoValor, { color: theme.primaryColor }]}>
-              {abastecimento.tipo === 'posto' ? 'Posto Direto' : 'Galão para Draga'}
+              {abastecimento.bomba.localizacao}
             </Text>
           </View>
         </View>
@@ -230,7 +120,7 @@ export default function FuelPage() {
             color={theme.textSecondaryColor}
           />
           <Text style={[styles.abastecimentoResponsavel, { color: theme.textSecondaryColor }]}>
-            {abastecimento.responsavel}
+            {abastecimento.usuario.nome}
           </Text>
         </View>
       </View>
@@ -241,36 +131,6 @@ export default function FuelPage() {
       />
     </TouchableOpacity>
   );
-
-  const filterSections = [
-    {
-      title: 'Período',
-      options: [
-        { label: 'Hoje', value: 'hoje', selected: filtros.periodo === 'hoje' },
-        { label: 'Semana', value: 'semana', selected: filtros.periodo === 'semana' },
-        { label: 'Mês', value: 'mes', selected: filtros.periodo === 'mes' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, periodo: value })),
-    },
-    {
-      title: 'Máquina',
-      options: [
-        { label: 'Todas', value: 'todas', selected: filtros.maquina === 'todas' },
-        { label: 'Draga 01', value: 'draga01', selected: filtros.maquina === 'draga01' },
-        { label: 'Draga 02', value: 'draga02', selected: filtros.maquina === 'draga02' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, maquina: value })),
-    },
-    {
-      title: 'Tipo',
-      options: [
-        { label: 'Todos', value: 'todos', selected: filtros.tipo === 'todos' },
-        { label: 'Posto Direto', value: 'posto', selected: filtros.tipo === 'posto' },
-        { label: 'Galão', value: 'galao', selected: filtros.tipo === 'galao' },
-      ],
-      onSelect: (value) => setFiltros(prev => ({ ...prev, tipo: value })),
-    },
-  ];
 
   return (
     <DefaultPage title="Abastecimentos">
@@ -299,7 +159,7 @@ export default function FuelPage() {
             {isLoading ? (
               <ActivityIndicator size="large" color={theme.primaryColor} />
             ) : (
-              data.ultimosAbastecimentos.map(renderAbastecimento)
+              abastecimentos.map(renderAbastecimento)
             )}
           </ScrollView>
         </View>

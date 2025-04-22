@@ -13,7 +13,7 @@ import DefaultPage from '../../components/common/DefaultPage';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const tiposMaquina = [
-    { id: 'draga', label: 'Draga', icon: 'dredger' },
+    { id: 'draga', label: 'Draga', icon: 'construction' },
     { id: 'caminhao', label: 'Caminhão', icon: 'local-shipping' },
     { id: 'pa', label: 'Pá Carregadeira', icon: 'construction' },
     { id: 'outro', label: 'Outro', icon: 'build' },

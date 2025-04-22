@@ -4,9 +4,9 @@ import api from '../config/api';
  * @typedef {Object} Maquina
  * @property {number} id - ID da máquina
  * @property {string} nome - Nome da máquina
- * @property {string} tipo - Tipo da máquina (draga, caminhao, pa, outro)
- * @property {string} descricao - Descrição da máquina
- * @property {string} status - Status da máquina (ativo, inativo)
+ * @property {'DRAGA'|'CAMINHAO'|'PA_CARREGADEIRA'|'OUTRO'} tipo - Tipo da máquina
+ * @property {string} codigoBomba - Código da bomba
+ * @property {string} dataFabricacao - Data de fabricação no formato ISO
  */
 
 /**
@@ -15,9 +15,12 @@ import api from '../config/api';
  */
 export const listarMaquinas = async () => {
     try {
-        const response = await api.get('/maquinas');
+        console.log('Fazendo requisição para /maquinarios...');
+        const response = await api.get('/maquinarios');
+        console.log('Resposta da API:', response.data);
         return response.data;
     } catch (error) {
+        console.error('Erro na requisição de máquinas:', error);
         throw error;
     }
 };
@@ -26,14 +29,14 @@ export const listarMaquinas = async () => {
  * Cria uma nova máquina
  * @param {Object} dados - Dados da máquina
  * @param {string} dados.nome - Nome da máquina
- * @param {string} dados.tipo - Tipo da máquina
- * @param {string} dados.descricao - Descrição da máquina
- * @param {string} dados.status - Status da máquina
+ * @param {'DRAGA'|'CAMINHAO'|'PA_CARREGADEIRA'|'OUTRO'} dados.tipo - Tipo da máquina
+ * @param {string} dados.codigoBomba - Código da bomba
+ * @param {string} dados.dataFabricacao - Data de fabricação no formato ISO
  * @returns {Promise<Maquina>} Máquina criada
  */
 export const criarMaquina = async (dados) => {
     try {
-        const response = await api.post('/maquinas', dados);
+        const response = await api.post('/maquinarios', dados);
         return response.data;
     } catch (error) {
         throw error;
@@ -47,7 +50,7 @@ export const criarMaquina = async (dados) => {
  */
 export const obterMaquina = async (id) => {
     try {
-        const response = await api.get(`/maquinas/${id}`);
+        const response = await api.get(`/maquinarios/${id}`);
         return response.data;
     } catch (error) {
         throw error;
@@ -59,14 +62,14 @@ export const obterMaquina = async (id) => {
  * @param {number} id - ID da máquina
  * @param {Object} dados - Dados atualizados
  * @param {string} [dados.nome] - Novo nome
- * @param {string} [dados.tipo] - Novo tipo
- * @param {string} [dados.descricao] - Nova descrição
- * @param {string} [dados.status] - Novo status
+ * @param {'DRAGA'|'CAMINHAO'|'PA_CARREGADEIRA'|'OUTRO'} [dados.tipo] - Novo tipo
+ * @param {string} [dados.codigoBomba] - Novo código da bomba
+ * @param {string} [dados.dataFabricacao] - Nova data de fabricação
  * @returns {Promise<Maquina>} Máquina atualizada
  */
 export const atualizarMaquina = async (id, dados) => {
     try {
-        const response = await api.put(`/maquinas/${id}`, dados);
+        const response = await api.put(`/maquinarios/${id}`, dados);
         return response.data;
     } catch (error) {
         throw error;
@@ -80,7 +83,7 @@ export const atualizarMaquina = async (id, dados) => {
  */
 export const removerMaquina = async (id) => {
     try {
-        await api.delete(`/maquinas/${id}`);
+        await api.delete(`/maquinarios/${id}`);
     } catch (error) {
         throw error;
     }

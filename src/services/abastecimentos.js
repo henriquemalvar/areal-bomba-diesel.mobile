@@ -14,25 +14,24 @@ import api from '../config/api';
 /**
  * @typedef {Object} Abastecimento
  * @property {number} id - ID do abastecimento
- * @property {number} bombaId - ID da bomba
- * @property {number} quantidade - Quantidade em litros
- * @property {string} data - Data do abastecimento
- * @property {string} status - Status do abastecimento
  * @property {number} maquinarioId - ID do maquinário
+ * @property {number} litros - Quantidade de litros abastecidos
+ * @property {string} data - Data do abastecimento
+ * @property {number} bombaId - ID da bomba
  * @property {number} usuarioId - ID do usuário
- * @property {Object} [maquinario] - Dados do maquinário
- * @property {Object} [bomba] - Dados da bomba
- * @property {Object} [usuario] - Dados do usuário
+ * @property {Object} maquinario - Dados do maquinário
+ * @property {Object} bomba - Dados da bomba
+ * @property {Object} usuario - Dados do usuário
  */
 
 /**
- * Lista todos os abastecimentos
+ * Lista todos os abastecimentos com filtros opcionais
+ * @param {FiltrosAbastecimento} [filtros] - Filtros para a busca
  * @returns {Promise<Abastecimento[]>} Lista de abastecimentos
- * @throws {Error} Erro ao listar abastecimentos
  */
-export const listarAbastecimentos = async () => {
+export const listarAbastecimentos = async (filtros = {}) => {
     try {
-        const response = await api.get('/abastecimentos');
+        const response = await api.get('/abastecimentos', { params: filtros });
         return response.data;
     } catch (error) {
         throw new Error('Erro ao listar abastecimentos');
@@ -42,12 +41,12 @@ export const listarAbastecimentos = async () => {
 /**
  * Cria um novo abastecimento
  * @param {Object} dados - Dados do abastecimento
- * @param {number} dados.bombaId - ID da bomba
- * @param {number} dados.quantidade - Quantidade em litros
  * @param {number} dados.maquinarioId - ID do maquinário
+ * @param {number} dados.litros - Quantidade de litros
+ * @param {string} dados.data - Data do abastecimento
+ * @param {number} dados.bombaId - ID da bomba
  * @param {number} dados.usuarioId - ID do usuário
  * @returns {Promise<Abastecimento>} Abastecimento criado
- * @throws {Error} Erro ao criar abastecimento
  */
 export const criarAbastecimento = async (dados) => {
     try {
@@ -62,7 +61,6 @@ export const criarAbastecimento = async (dados) => {
  * Obtém um abastecimento pelo ID
  * @param {number} id - ID do abastecimento
  * @returns {Promise<Abastecimento>} Dados do abastecimento
- * @throws {Error} Erro ao obter abastecimento
  */
 export const obterAbastecimento = async (id) => {
     try {
@@ -78,7 +76,6 @@ export const obterAbastecimento = async (id) => {
  * @param {number} id - ID do abastecimento
  * @param {Object} dados - Dados atualizados do abastecimento
  * @returns {Promise<Abastecimento>} Abastecimento atualizado
- * @throws {Error} Erro ao atualizar abastecimento
  */
 export const atualizarAbastecimento = async (id, dados) => {
     try {
@@ -93,7 +90,6 @@ export const atualizarAbastecimento = async (id, dados) => {
  * Remove um abastecimento
  * @param {number} id - ID do abastecimento
  * @returns {Promise<void>}
- * @throws {Error} Erro ao remover abastecimento
  */
 export const removerAbastecimento = async (id) => {
     try {
