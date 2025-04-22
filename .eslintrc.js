@@ -7,7 +7,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
   ],
   parser: '@typescript-eslint/parser',
-  plugins: ['react', 'react-hooks', '@typescript-eslint'],
+  plugins: ['react', 'react-hooks', '@typescript-eslint', 'unused-imports'],
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
@@ -18,6 +18,16 @@ module.exports = {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'react/no-unescaped-entities': 'off',
     'no-useless-catch': 'off',
+    'unused-imports/no-unused-imports': 'error',
+    'unused-imports/no-unused-vars': [
+      'warn',
+      {
+        vars: 'all',
+        varsIgnorePattern: '^_',
+        args: 'after-used',
+        argsIgnorePattern: '^_',
+      },
+    ],
   },
   settings: {
     react: {
