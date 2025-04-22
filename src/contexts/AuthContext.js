@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import ErrorModal from '../components/ErrorModal';
 import { useFeedback } from '../components/FeedbackProvider';
-import { getUserData, login, logout } from '../services/auth';
+import { getUserData, login, logout, updateProfile } from '../services/auth';
 
 const AuthContext = createContext({});
 
@@ -90,6 +90,25 @@ export function AuthProvider({ children }) {
         }
     }
 
+    async function updateUserProfile(data) {
+        try {
+            const updatedUser = await updateProfile(data);
+            if (__DEV__) {
+                console.log('Perfil atualizado:', updatedUser);
+            }
+            setUser(updatedUser);
+            showSuccess('Perfil atualizado com sucesso!', 'Alterações salvas');
+            return updatedUser;
+        } catch (error) {
+            if (__DEV__) {
+                console.error('Erro ao atualizar perfil:', error);
+            }
+            setError(error);
+            showError('Não foi possível atualizar seu perfil');
+            throw error;
+        }
+    }
+
     return (
         <AuthContext.Provider value={{
             signed: !!user,
@@ -97,7 +116,8 @@ export function AuthProvider({ children }) {
             loading,
             signIn,
             signUp,
-            signOut
+            signOut,
+            updateProfile: updateUserProfile
         }}>
             {children}
             <ErrorModal

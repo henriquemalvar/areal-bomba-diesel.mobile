@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import FuelDetailsPage from '../pages/fuel/FuelDetailsPage';
+import FilterFuelPage from '../pages/fuel/FilterFuelPage';
 import FuelPage from '../pages/fuel/FuelPage';
 import NewFuelPage from '../pages/fuel/NewFuelPage';
 
@@ -15,7 +15,7 @@ export default function FuelStack() {
     >
       <Stack.Screen name="Fuel" component={FuelPage} />
       <Stack.Screen name="NewFuel" component={NewFuelPage} />
-      <Stack.Screen name="FuelDetails" component={FuelDetailsPage} />
+      <Stack.Screen name="FilterFuel" component={FilterFuelPage} />
     </Stack.Navigator>
   );
 }

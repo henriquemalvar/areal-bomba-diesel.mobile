@@ -1,8 +1,8 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import HomePage from '../pages/HomePage';
-import FuelDetailsPage from '../pages/fuel/FuelDetailsPage';
-import MaintenanceDetailsPage from '../pages/maintenance/MaintenanceDetailsPage';
+import FuelPage from '../pages/fuel/FuelPage';
+import MaintenancePage from '../pages/maintenance/MaintenancePage';
 
 const Stack = createStackNavigator();
 
@@ -14,8 +14,8 @@ export default function HomeStack() {
       }}
     >
       <Stack.Screen name="Home" component={HomePage} />
-      <Stack.Screen name="FuelDetails" component={FuelDetailsPage} />
-      <Stack.Screen name="MaintenanceDetails" component={MaintenanceDetailsPage} />
+      <Stack.Screen name="FuelDetails" component={FuelPage} />
+      <Stack.Screen name="Maintenance" component={MaintenancePage} />
     </Stack.Navigator>
   );
 }
