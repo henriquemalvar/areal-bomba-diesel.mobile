@@ -3,68 +3,75 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import FuelStack from './FuelStack';
 import HomeStack from './HomeStack';
+import MachinesStack from './MachinesStack';
 import MaintenanceStack from './MaintenanceStack';
 import SettingsStack from './SettingsStack';
 
 const Tab = createBottomTabNavigator();
 
+const tabBarOptions = {
+  headerShown: false,
+  tabBarActiveTintColor: '#1a237e',
+  tabBarInactiveTintColor: '#666',
+  tabBarStyle: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+};
+
+const tabConfig = {
+  Inicio: {
+    component: HomeStack,
+    icon: 'home',
+    label: 'Início',
+  },
+  Abastecimento: {
+    component: FuelStack,
+    icon: 'local-gas-station',
+    label: 'Abastecimento',
+  },
+  Maquinas: {
+    component: MachinesStack,
+    icon: 'construction',
+    label: 'Máquinas',
+  },
+  Manutencao: {
+    component: MaintenanceStack,
+    icon: 'build',
+    label: 'Manutenção',
+  },
+  Configuracoes: {
+    component: SettingsStack,
+    icon: 'settings',
+    label: 'Configurações',
+  },
+};
+
 export default function MainRoutes() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-
-          if (route.name === 'Inicio') {
-            iconName = 'home';
-          } else if (route.name === 'Abastecimento') {
-            iconName = 'local-gas-station';
-          } else if (route.name === 'Manutencao') {
-            iconName = 'build';
-          } else if (route.name === 'Configuracoes') {
-            iconName = 'settings';
-          }
-
-          return <MaterialIcons name={iconName} size={size} color={color} />;
-        },
-        headerShown: false,
-        tabBarActiveTintColor: '#1a237e',
-        tabBarInactiveTintColor: '#666',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
-        },
+        ...tabBarOptions,
+        tabBarIcon: ({ color, size }) => (
+          <MaterialIcons
+            name={tabConfig[route.name].icon}
+            size={size}
+            color={color}
+          />
+        ),
       })}
     >
-      <Tab.Screen
-        name="Inicio"
-        component={HomeStack}
-        options={{
-          tabBarLabel: 'Início'
-        }}
-      />
-      <Tab.Screen
-        name="Abastecimento"
-        component={FuelStack}
-        options={{
-          tabBarLabel: 'Abastecimento'
-        }}
-      />
-      <Tab.Screen
-        name="Manutencao"
-        component={MaintenanceStack}
-        options={{
-          tabBarLabel: 'Manutenção'
-        }}
-      />
-      <Tab.Screen
-        name="Configuracoes"
-        component={SettingsStack}
-        options={{
-          tabBarLabel: 'Configurações'
-        }}
-      />
+      {Object.entries(tabConfig).map(([name, config]) => (
+        <Tab.Screen
+          key={name}
+          name={name}
+          component={config.component}
+          options={{
+            tabBarLabel: config.label,
+          }}
+        />
+      ))}
     </Tab.Navigator>
   );
 }
