@@ -60,7 +60,6 @@ export default function RegisterScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.title}>Criar Conta</Text>
           <Text style={styles.subtitle}>Preencha os dados abaixo para criar sua conta no sistema</Text>
 
           <View style={styles.form}>
@@ -173,13 +172,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 160,
     height: 60,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1a237e',
-    textAlign: 'center',
-    marginTop: 8,
   },
   subtitle: {
     fontSize: 15,
