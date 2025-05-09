@@ -1,13 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
+import logoImg from '../../../assets/areal-ilha-rio-doce.webp';
 import { useFeedback } from '../../components/FeedbackProvider';
+import { InputField } from '../../components/InputField';
+import { PasswordInput } from '../../components/PasswordInput';
 import { useAuth } from '../../contexts/AuthContext';
 
 const registerSchema = z.object({
@@ -27,9 +28,7 @@ export default function RegisterScreen() {
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(registerSchema),
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const handleRegister = async (data) => {
     try {
@@ -45,164 +44,118 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <LinearGradient
-        colors={['#ffffff', '#f5f5f5']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoid}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoid}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.content}>
-              <View style={styles.logoContainer}>
-                <Image
-                  source={{ uri: 'https://api.a0.dev/assets/image?text=construction%20machinery%20management%20app%20logo&aspect=1:1' }}
-                  style={styles.logo}
+        <View style={styles.container}>
+          <View style={styles.logoBox}>
+            <Image
+              source={logoImg}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.title}>Criar Conta</Text>
+          <Text style={styles.subtitle}>Preencha os dados abaixo para criar sua conta no sistema</Text>
+
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, value } }) => (
+                <InputField
+                  label="Nome"
+                  placeholder="Seu nome completo"
+                  iconLeft={<MaterialIcons name="person" size={22} color="#1a237e" />}
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.name?.message}
+                  autoCapitalize="words"
+                  editable={!loading}
                 />
-                <View style={styles.logoOverlay} />
+              )}
+            />
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <InputField
+                  label="E-mail"
+                  placeholder="seu@email.com"
+                  iconLeft={<MaterialIcons name="email" size={22} color="#1a237e" />}
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.email?.message}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <PasswordInput
+                  label="Senha"
+                  placeholder="Mínimo 6 caracteres"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.password?.message}
+                  editable={!loading}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, value } }) => (
+                <PasswordInput
+                  label="Confirmar Senha"
+                  placeholder="Digite a senha novamente"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.confirmPassword?.message}
+                  editable={!loading}
+                />
+              )}
+            />
+            <TouchableOpacity
+              style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+              onPress={handleSubmit(handleRegister)}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>{loading ? 'Criando conta...' : 'Criar Conta'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <MaterialIcons name="arrow-back" size={18} color="#0a2c63" style={{ marginRight: 4 }} />
+                <Text style={styles.loginButtonText}>Voltar para o login</Text>
               </View>
-
-              <Text style={styles.title}>Criar Conta</Text>
-              <Text style={styles.subtitle}>Preencha os dados para se registrar</Text>
-
-              <View style={styles.formContainer}>
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="person" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="name"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Nome completo"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        autoCapitalize="words"
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                </View>
-                {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
-
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="email" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="email"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="E-mail"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                </View>
-                {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Senha"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        secureTextEntry={!showPassword}
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <MaterialIcons
-                      name={showPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="confirmPassword"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Confirmar senha"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        secureTextEntry={!showConfirmPassword}
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <MaterialIcons
-                      name={showConfirmPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
-
-                <TouchableOpacity
-                  style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-                  onPress={handleSubmit(handleRegister)}
-                  disabled={loading}
-                >
-                  <Text style={styles.registerButtonText}>
-                    {loading ? 'Criando conta...' : 'Criar conta'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  <Text style={styles.loginButtonText}>Já tem uma conta? Faça login</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
-    </SafeAreaView>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: 'white',
+    width: '100%',
+    maxWidth: 400,
+    padding: 28,
+    alignItems: 'center',
   },
   keyboardAvoid: {
     flex: 1,
@@ -210,108 +163,59 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  logoContainer: {
-    position: 'relative',
-    marginBottom: 20,
+  logoBox: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'white',
-  },
-  logoOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 160,
+    height: 60,
   },
   title: {
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1a237e',
-    marginBottom: 10,
     textAlign: 'center',
+    marginTop: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
+    fontSize: 15,
+    color: '#757575',
+    textAlign: 'center',
+    marginBottom: 24,
+    marginTop: 4,
   },
-  formContainer: {
+  form: {
     width: '100%',
-    maxWidth: 400,
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 15,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-  },
-  errorText: {
-    color: '#d32f2f',
-    fontSize: 14,
-    marginBottom: 10,
-    marginLeft: 5,
+    marginBottom: 16,
   },
   registerButton: {
-    backgroundColor: '#1a237e',
-    borderRadius: 12,
-    padding: 15,
-    width: '100%',
+    backgroundColor: '#0a2c63',
+    borderRadius: 8,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 8,
   },
   registerButtonDisabled: {
-    backgroundColor: '#9fa8da',
+    opacity: 0.7,
   },
   registerButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
   loginButton: {
     marginTop: 15,
     padding: 10,
+    alignItems: 'center',
   },
   loginButtonText: {
-    color: '#1a237e',
+    color: '#0a2c63',
     fontSize: 16,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
 });

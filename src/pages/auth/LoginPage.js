@@ -4,11 +4,15 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import { useFeedback } from '../../components/FeedbackProvider';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { PasswordInput } from '../../components/PasswordInput';
+import { InputField } from '../../components/InputField';
+import logoImg from '../../../assets/areal-ilha-rio-doce.webp';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -18,157 +22,115 @@ const loginSchema = z.object({
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { signIn } = useAuth();
-  const { showError, showSuccess } = useFeedback();
+  const { showError } = useFeedback();
   const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
   });
-  const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [debugInfo, setDebugInfo] = React.useState(null);
 
   const handleLogin = async (data) => {
     try {
       setLoading(true);
-      setDebugInfo(null);
       await signIn(data.email, data.password);
-      showSuccess('Login realizado', 'Bem-vindo de volta!');
     } catch (error) {
       showError('Erro no login', error.message);
-      if (__DEV__) {
-        setDebugInfo({
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString(),
-        });
-      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <LinearGradient
-        colors={['#ffffff', '#f5f5f5']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoid}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoid}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.content}>
-              <View style={styles.logoContainer}>
-                <Image
-                  source={{ uri: 'https://api.a0.dev/assets/image?text=construction%20machinery%20management%20app%20logo&aspect=1:1' }}
-                  style={styles.logo}
+        <View style={styles.card}>
+          <View style={styles.logoBox}>
+            <Image
+              source={logoImg}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.title}>Areal Ilha do Rio Doce</Text>
+          <Text style={styles.subtitle}>Entre com suas credenciais para acessar o sistema</Text>
+
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <InputField
+                  label="E-mail"
+                  iconLeft={<MaterialIcons name="email" size={22} color="#1a237e" />}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="seu@email.com"
+                  error={errors.email?.message}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
                 />
-                <View style={styles.logoOverlay} />
-              </View>
-
-              <Text style={styles.title}>Gestão de Frota</Text>
-              <Text style={styles.subtitle}>Faça login para continuar</Text>
-
-              <View style={styles.formContainer}>
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="email" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="email"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="E-mail"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                </View>
-                {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="lock" size={24} color="#1a237e" style={styles.icon} />
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Senha"
-                        placeholderTextColor="#666"
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                        secureTextEntry={!showPassword}
-                        editable={!loading}
-                      />
-                    )}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <MaterialIcons
-                      name={showPassword ? "visibility" : "visibility-off"}
-                      size={24}
-                      color="#1a237e"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-
-                <TouchableOpacity
-                  style={styles.forgotPassword}
-                  onPress={() => navigation.navigate('ForgotPassword')}
-                >
-                  <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-                  onPress={handleSubmit(handleLogin)}
-                  disabled={loading}
-                >
-                  <Text style={styles.loginButtonText}>
-                    {loading ? 'Entrando...' : 'Entrar'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.registerButton}
-                  onPress={() => navigation.navigate('Register')}
-                >
-                  <Text style={styles.registerButtonText}>Criar nova conta</Text>
-                </TouchableOpacity>
-              </View>
-
-              {__DEV__ && debugInfo && (
-                <View style={styles.debugContainer}>
-                  <Text style={styles.debugTitle}>Debug Info:</Text>
-                  <Text style={styles.debugText}>
-                    {JSON.stringify(debugInfo, null, 2)}
-                  </Text>
-                </View>
               )}
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
-    </SafeAreaView>
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <PasswordInput
+                  label="Senha"
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Digite sua senha"
+                  error={errors.password?.message}
+                  editable={!loading}
+                />
+              )}
+            />
+
+            <TouchableOpacity
+              style={styles.forgotPasswordBtn}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
+              <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              onPress={handleSubmit(handleLogin)}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footerBox}>
+            <Text style={styles.footerText}>
+              Não tem uma conta?{' '}
+              <Text style={styles.footerLink} onPress={() => navigation.navigate('Register')}>
+                Cadastre-se
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f7f9fb',
+  },
+  darkContainer: {
+    backgroundColor: '#1a1a1a',
   },
   gradient: {
     flex: 1,
@@ -179,137 +141,83 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
+    padding: 16,
   },
-  logoContainer: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'white',
-  },
-  logoOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a237e',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
-  },
-  formContainer: {
+  card: {
     width: '100%',
     maxWidth: 400,
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 12,
-    marginBottom: 15,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    padding: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: 'center',
   },
-  icon: {
-    marginRight: 10,
+  logoBox: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
+  logo: {
+    width: 160,
+    height: 60,
   },
-  errorText: {
-    color: '#d32f2f',
-    fontSize: 14,
-    marginBottom: 10,
-    marginLeft: 5,
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    textAlign: 'center',
+    marginTop: 8,
   },
-  forgotPassword: {
+  subtitle: {
+    fontSize: 15,
+    color: '#757575',
+    textAlign: 'center',
+    marginBottom: 24,
+    marginTop: 4,
+  },
+  form: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  forgotPasswordBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   forgotPasswordText: {
-    color: '#1a237e',
-    fontSize: 14,
+    color: '#0a2c63',
+    fontSize: 13,
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: '#1a237e',
-    borderRadius: 12,
-    padding: 15,
-    width: '100%',
+    backgroundColor: '#0a2c63',
+    borderRadius: 8,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 8,
   },
   loginButtonDisabled: {
     opacity: 0.7,
-    backgroundColor: '#1a237e',
   },
   loginButtonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  registerButton: {
-    padding: 15,
+  footerBox: {
+    marginTop: 10,
     alignItems: 'center',
   },
-  registerButtonText: {
-    color: '#1a237e',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  debugContainer: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
-    width: '100%',
-    maxHeight: 200,
-  },
-  debugTitle: {
+  footerText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 5,
+    color: '#222',
   },
-  debugText: {
-    fontSize: 12,
-    color: '#333',
-    fontFamily: 'monospace',
+  footerLink: {
+    color: '#0a2c63',
+    fontWeight: 'bold',
   },
 });

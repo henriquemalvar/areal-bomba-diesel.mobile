@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import ErrorModal from '../components/ErrorModal';
 import { useFeedback } from '../components/FeedbackProvider';
-import { getUserData, login, logout, updateProfile } from '../services/auth';
+import { login, logout, getUserData, updateProfile } from '../services/auth';
+import { supabase } from '../config/supabase';
 
 const AuthContext = createContext({});
 
@@ -12,62 +13,63 @@ export function AuthProvider({ children }) {
     const { showSuccess, showError } = useFeedback();
 
     useEffect(() => {
-        checkAuth();
+        let mounted = true;
+
+        const initializeAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session && mounted) {
+                    const userData = await getUserData();
+                    if (userData) {
+                        console.log(userData);
+                        setUser(userData);
+                        showSuccess(`Que bom te ver novamente, ${userData.user_metadata?.nome || userData.email.split('@')[0]}!`, 'Olá! 👋');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao inicializar autenticação:', error);
+                if (error.message !== 'Auth session missing!' && mounted) {
+                    showError('Não foi possível verificar sua autenticação');
+                }
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        initializeAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (mounted) {
+                if (event === 'SIGNED_IN' && session) {
+                    const userData = await getUserData();
+                    if (userData) {
+                        setUser(userData);
+                        showSuccess(`Que bom te ver, ${userData.user_metadata?.nome || userData.email}!`, 'Olá! 👋');
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    setUser(null);
+                }
+            }
+        });
+
+        return () => {
+            mounted = false;
+            subscription?.unsubscribe();
+        };
     }, []);
-
-    async function checkAuth() {
-        try {
-            const userData = await getUserData();
-            if (__DEV__) {
-                console.log('Dados do usuário recuperados:', userData);
-            }
-
-            if (userData) {
-                setUser(userData);
-                showSuccess(`Que bom te ver novamente, ${userData.nome}!`, 'Olá! 👋');
-            }
-        } catch (error) {
-            console.error('Erro ao verificar autenticação:', error);
-            showError('Não foi possível verificar sua autenticação');
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function signIn(email, password) {
         try {
             const response = await login(email, password);
-            if (__DEV__) {
-                console.log('Resposta do login:', response);
-            }
             setUser(response.user);
-            showSuccess(`Que bom te ver, ${response.user.nome}!`, 'Olá! 👋');
+            showSuccess(`Que bom te ver, ${response.user.user_metadata?.nome || response.user.email.split('@')[0]}!`, 'Olá! 👋');
             return response;
         } catch (error) {
-            if (__DEV__) {
-                console.error('Erro no login:', error);
-            }
             setError(error);
             showError('Email ou senha incorretos');
-            throw error;
-        }
-    }
-
-    async function signUp(name, email, password) {
-        try {
-            const response = await login(email, password);
-            if (__DEV__) {
-                console.log('Resposta do cadastro:', response);
-            }
-            setUser(response.user);
-            showSuccess(`Seja bem-vindo(a), ${response.user.nome}!`, 'Conta criada! 🎉');
-            return response;
-        } catch (error) {
-            if (__DEV__) {
-                console.error('Erro ao criar conta:', error);
-            }
-            setError(error);
-            showError('Não foi possível criar sua conta');
             throw error;
         }
     }
@@ -75,15 +77,9 @@ export function AuthProvider({ children }) {
     async function signOut() {
         try {
             await logout();
-            if (__DEV__) {
-                console.log('Logout realizado com sucesso');
-            }
             setUser(null);
             showSuccess('Até logo! 👋', 'Desconectado');
         } catch (error) {
-            if (__DEV__) {
-                console.error('Erro no logout:', error);
-            }
             setError(error);
             showError('Não foi possível fazer logout');
             throw error;
@@ -93,16 +89,10 @@ export function AuthProvider({ children }) {
     async function updateUserProfile(data) {
         try {
             const updatedUser = await updateProfile(data);
-            if (__DEV__) {
-                console.log('Perfil atualizado:', updatedUser);
-            }
             setUser(updatedUser);
             showSuccess('Perfil atualizado com sucesso!', 'Alterações salvas');
             return updatedUser;
         } catch (error) {
-            if (__DEV__) {
-                console.error('Erro ao atualizar perfil:', error);
-            }
             setError(error);
             showError('Não foi possível atualizar seu perfil');
             throw error;
@@ -115,7 +105,6 @@ export function AuthProvider({ children }) {
             user,
             loading,
             signIn,
-            signUp,
             signOut,
             updateProfile: updateUserProfile
         }}>

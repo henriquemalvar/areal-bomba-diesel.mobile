@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../config/api';
+import { supabase, signIn, signUp, signOut, getCurrentUser } from '../config/supabase';
 
 const AUTH_TOKEN_KEY = '@auth_token';
 const USER_DATA_KEY = '@user_data';
@@ -24,37 +24,59 @@ const USER_DATA_KEY = '@user_data';
  * Realiza o login do usuário
  * @param {string} email - Email do usuário
  * @param {string} password - Senha do usuário
- * @returns {Promise<LoginResponse>} Dados do login
+ * @returns {Promise<Object>} Dados do login
  */
 export const login = async (email, password) => {
     try {
-        const response = await api.post('/auth/login', {
-            email: email.trim(),
-            senha: password.trim()
-        });
+        const { data, error } = await signIn(email, password);
+        
+        if (error) throw error;
 
-        const { token, usuario } = response.data;
+        const { user, session } = data;
+        
+        if (session) {
+            await AsyncStorage.setItem(AUTH_TOKEN_KEY, session.access_token);
+        }
+        
+        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
 
-        await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
-        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(usuario));
-
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        return { token, user: usuario };
+        return { user };
     } catch (error) {
+        console.error('Erro no login:', error);
         throw error;
     }
 };
 
 /**
  * Registra um novo usuário
- * @param {RegisterData} dados - Dados do usuário
+ * @param {Object} dados - Dados do usuário
+ * @param {string} dados.nome - Nome do usuário
+ * @param {string} dados.email - Email do usuário
+ * @param {string} dados.senha - Senha do usuário
  * @returns {Promise<Object>} Dados do registro
  */
-export const register = async (dados) => {
+export const register = async ({ nome, email, senha }) => {
     try {
-        const response = await api.post('/auth/register', dados);
-        return response.data;
+        const { data, error } = await signUp(email, senha);
+        
+        if (error) throw error;
+
+        const { user, session } = data;
+        
+        if (session) {
+            await AsyncStorage.setItem(AUTH_TOKEN_KEY, session.access_token);
+        }
+
+        // Atualiza os metadados do usuário com o nome
+        const { error: updateError } = await supabase.auth.updateUser({
+            data: { nome }
+        });
+
+        if (updateError) throw updateError;
+
+        return { user };
     } catch (error) {
+        console.error('Erro no registro:', error);
         throw error;
     }
 };
@@ -65,10 +87,13 @@ export const register = async (dados) => {
  */
 export const logout = async () => {
     try {
-        await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+        const { error } = await signOut();
+        if (error) throw error;
+        
         await AsyncStorage.removeItem(USER_DATA_KEY);
-        delete api.defaults.headers.common['Authorization'];
+        await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
     } catch (error) {
+        console.error('Erro no logout:', error);
         throw error;
     }
 };
@@ -79,8 +104,17 @@ export const logout = async () => {
  */
 export const getToken = async () => {
     try {
-        return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        if (!token) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                await AsyncStorage.setItem(AUTH_TOKEN_KEY, session.access_token);
+                return session.access_token;
+            }
+        }
+        return token;
     } catch (error) {
+        console.error('Erro ao obter token:', error);
         throw error;
     }
 };
@@ -91,39 +125,61 @@ export const getToken = async () => {
  */
 export const getUserData = async () => {
     try {
-        const userData = await AsyncStorage.getItem(USER_DATA_KEY);
-        return userData ? JSON.parse(userData) : null;
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            return null;
+        }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) throw userError;
+        if (!user) return null;
+
+        return user;
     } catch (error) {
+        console.error('Erro ao obter dados do usuário:', error);
         throw error;
     }
 };
 
 /**
  * Verifica se o usuário está autenticado
- * @returns {Promise<boolean>} Status da autenticação
+ * @returns {Promise<boolean>}
  */
 export const isAuthenticated = async () => {
     try {
-        const token = await getToken();
-        return !!token;
+        const { data: { session } } = await supabase.auth.getSession();
+        return !!session;
     } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
         return false;
     }
 };
 
 /**
  * Atualiza o perfil do usuário
- * @param {Object} data - Dados a serem atualizados
+ * @param {Object} data - Dados para atualização
  * @returns {Promise<Object>} Dados atualizados
  */
 export const updateProfile = async (data) => {
     try {
-        const response = await api.put('/auth/profile', data);
-        const { usuario } = response.data;
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            throw new Error('Usuário não autenticado');
+        }
 
-        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(usuario));
-        return usuario;
+        const { data: { user }, error: updateError } = await supabase.auth.updateUser({
+            data
+        });
+        
+        if (updateError) throw updateError;
+        if (!user) throw new Error('Usuário não encontrado');
+
+        return user;
     } catch (error) {
+        console.error('Erro ao atualizar perfil:', error);
         throw error;
     }
 }; 

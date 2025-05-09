@@ -10,13 +10,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <MachinesProvider>
-          <FeedbackProvider>
-            <AuthProvider>
-              <Routes />
-            </AuthProvider>
-          </FeedbackProvider>
-        </MachinesProvider>
+        <FeedbackProvider>
+          <AuthProvider>
+            <Routes />
+          </AuthProvider>
+        </FeedbackProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
