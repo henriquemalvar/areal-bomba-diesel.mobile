@@ -10,17 +10,55 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
+import PropTypes from 'prop-types';
 import Page from '../components/common/Page';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { mockData } from './mockData';
 
-function Card({ icon, title, description, screen }) {
+const HOME_CARDS = [
+  {
+    icon: 'local-gas-station',
+    title: 'Registrar Abastecimento',
+    description: 'Adicione um novo registro de abastecimento',
+    screen: 'RegistrarAbastecimento',
+  },
+  {
+    icon: 'history',
+    title: 'Histórico',
+    description: 'Visualize o histórico de abastecimentos',
+    screen: 'Historico',
+  },
+  {
+    icon: 'bar-chart',
+    title: 'Relatórios',
+    description: 'Visualize gráficos e estatísticas de consumo',
+    screen: 'Relatorios',
+  },
+  {
+    icon: 'build',
+    title: 'Gerenciar Máquinas',
+    description: 'Adicione, edite ou remova máquinas',
+    screen: 'Machines',
+  },
+  {
+    icon: 'person',
+    title: 'Perfil',
+    description: 'Acesse seu perfil e configurações',
+    screen: 'Profile',
+    params: { screen: 'ProfileScreen' },
+  },
+];
+
+const HomeCard = ({ icon, title, description, screen, params }) => {
   const { theme } = useTheme();
   const navigation = useNavigation();
 
+  const handlePress = () => navigation.navigate(screen, params);
+
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate(screen)}
+      onPress={handlePress}
       style={[styles.card, { backgroundColor: theme.cardBackground }]}
     >
       <View style={styles.cardContent}>
@@ -39,56 +77,30 @@ function Card({ icon, title, description, screen }) {
       </View>
     </TouchableOpacity>
   );
-}
+};
+
+HomeCard.propTypes = {
+  icon: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  screen: PropTypes.string.isRequired,
+  params: PropTypes.object,
+};
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [data] = useState(mockData);
-
   const hoje = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
-  const cards = [
-    {
-      icon: 'local-gas-station',
-      title: 'Registrar Abastecimento',
-      description: 'Adicione um novo registro de abastecimento',
-      screen: 'Fuel',
-    }, 
-    {
-      icon: 'history',
-      title: 'Histórico',
-      description: 'Visualize o histórico de abastecimentos',
-      screen: 'History',
-    },
-    {
-      icon: 'bar-chart',
-      title: 'Relatórios',
-      description: 'Visualize gráficos e estatísticas de consumo',
-      screen: 'Reports',
-    },
-    {
-      icon: 'build',
-      title: 'Gerenciar Máquinas',
-      description: 'Adicione, edite ou remova máquinas',
-      screen: 'Machines',
-    },
-    {
-      icon: 'person',
-      title: 'Perfil',
-      description: 'Acesse seu perfil e configurações',
-      screen: 'Profile',
-    },
-  ];
+  const nomeUsuario = user?.user_metadata?.nome || user?.email?.split('@')[0] || 'Usuário';
 
   return (
-    <Page title={`Olá, ${data.usuario.nome}!`} subtitle={hoje}>
+    <Page title={`Olá, ${nomeUsuario}!`} subtitle={hoje}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.grid}>
-          {cards.map((card, index) => (
-            <Card
+          {HOME_CARDS.map((card, index) => (
+            <HomeCard
               key={index}
-              icon={card.icon}
-              title={card.title}
-              description={card.description}
-              screen={card.screen}
+              {...card}
             />
           ))}
         </View>

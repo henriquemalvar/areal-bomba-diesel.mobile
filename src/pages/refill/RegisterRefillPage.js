@@ -1,22 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform, ScrollView } from 'react-native';
+import PropTypes from 'prop-types';
+import { useNavigation } from '@react-navigation/native';
 import Page from '../../components/common/Page';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
+import SearchBar from '../../components/common/SearchBar';
 
-// Mock de máquinas
-const mockMachines = [
+const COLORS = {
+  primary: '#0a2c63',
+  error: '#F44336',
+  background: '#fff',
+  cardBackground: '#fff',
+  inputBackground: '#f7f9fb',
+  text: '#222',
+  textSecondary: '#757575',
+  border: '#ddd',
+  avatar: '#0a2c63',
+};
+
+const MOCK_MACHINES = [
   { id: '1', name: 'Escavadeira' },
   { id: '2', name: 'Trator' },
   { id: '3', name: 'Caminhão' },
 ];
 
-const fuelTypes = ['Diesel', 'Gasolina', 'Etanol'];
+const FUEL_TYPES = ['Diesel', 'Gasolina', 'Etanol'];
+
+const DateTimeInput = ({ label, value, onPress, icon, showPicker, onDateChange, mode }) => {
+  const formatValue = () => {
+    if (mode === 'date') {
+      return value.toLocaleDateString('pt-BR');
+    }
+    return value.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <TouchableOpacity 
+        style={[styles.input, styles.dateInput]} 
+        onPress={onPress}
+      >
+        <View style={styles.inputContent}>
+          {icon}
+          <Text style={styles.dateText}>{formatValue()}</Text>
+        </View>
+      </TouchableOpacity>
+      {showPicker && (
+        <DateTimePicker
+          value={value}
+          mode={mode}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          is24Hour={mode === 'time'}
+          onChange={onDateChange}
+        />
+      )}
+    </View>
+  );
+};
+
+DateTimeInput.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.instanceOf(Date).isRequired,
+  onPress: PropTypes.func.isRequired,
+  icon: PropTypes.node.isRequired,
+  showPicker: PropTypes.bool.isRequired,
+  onDateChange: PropTypes.func.isRequired,
+  mode: PropTypes.oneOf(['date', 'time']).isRequired,
+};
+
+const LoadingScreen = () => (
+  <Page subtitle="Preencha os dados para registrar um novo abastecimento">
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size={32} color={COLORS.primary} />
+    </View>
+  </Page>
+);
+
+const PickerInput = ({ label, value, onValueChange, items, placeholder }) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <View style={styles.pickerContainer}>
+      <Picker
+        selectedValue={value}
+        onValueChange={onValueChange}
+        style={styles.picker}
+        dropdownIconColor={COLORS.textSecondary}
+      >
+        {placeholder && (
+          <Picker.Item 
+            label={placeholder} 
+            value="" 
+            color={COLORS.textSecondary}
+          />
+        )}
+        {items.map((item) => (
+          <Picker.Item 
+            key={item.id || item} 
+            label={item.name || item} 
+            value={item.id || item}
+            color={COLORS.text}
+          />
+        ))}
+      </Picker>
+    </View>
+  </View>
+);
+
+PickerInput.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  items: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+      }),
+    ])
+  ).isRequired,
+  placeholder: PropTypes.string,
+};
+
+const TextInputField = ({ label, value, onChangeText, placeholder, keyboardType }) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <TextInput
+      style={styles.input}
+      placeholder={placeholder}
+      keyboardType={keyboardType}
+      value={value}
+      onChangeText={onChangeText}
+      placeholderTextColor={COLORS.textSecondary}
+    />
+  </View>
+);
+
+TextInputField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChangeText: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  keyboardType: PropTypes.string,
+};
+
+const RegisterButton = ({ onPress, isLoading }) => (
+  <TouchableOpacity
+    style={[styles.button, isLoading && styles.buttonDisabled]}
+    onPress={onPress}
+    disabled={isLoading}
+  >
+    {isLoading ? (
+      <ActivityIndicator size={20} color={COLORS.background} />
+    ) : (
+      <View style={styles.buttonContent}>
+        <MaterialIcons name="add-circle" size={20} color={COLORS.background} style={{ marginRight: 8 }} />
+        <Text style={styles.buttonText}>Registrar Abastecimento</Text>
+      </View>
+    )}
+  </TouchableOpacity>
+);
+
+RegisterButton.propTypes = {
+  onPress: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool.isRequired,
+};
 
 export default function RegisterRefillPage() {
+  const navigation = useNavigation();
   const [machines, setMachines] = useState([]);
   const [selectedMachine, setSelectedMachine] = useState('');
-  const [selectedFuelType, setSelectedFuelType] = useState('Diesel');
+  const [selectedFuelType, setSelectedFuelType] = useState(FUEL_TYPES[0]);
   const [quantity, setQuantity] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -24,210 +181,197 @@ export default function RegisterRefillPage() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMachines, setIsLoadingMachines] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchMachines();
   }, []);
 
-  function fetchMachines() {
+  const fetchMachines = () => {
     setIsLoadingMachines(true);
     setTimeout(() => {
-      setMachines(mockMachines);
-      setSelectedMachine(mockMachines[0]?.id || '');
+      setMachines(MOCK_MACHINES);
+      setSelectedMachine(MOCK_MACHINES[0]?.id || '');
       setIsLoadingMachines(false);
     }, 600);
-  }
+  };
 
-  function combineDateTime(date, time) {
-    const combined = new Date(date);
-    combined.setHours(time.getHours());
-    combined.setMinutes(time.getMinutes());
-    return combined;
-  }
+  const handleDateChange = (_, selected) => {
+    setShowDatePicker(false);
+    if (selected) setDate(selected);
+  };
 
-  function handleRegister() {
+  const handleTimeChange = (_, selected) => {
+    setShowTimePicker(false);
+    if (selected) setTime(selected);
+  };
+
+  const handleRegister = () => {
     if (!selectedMachine || !quantity || Number.parseFloat(quantity) <= 0) {
       Alert.alert('Campos obrigatórios', 'Por favor, preencha todos os campos corretamente.');
       return;
     }
+
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
       setQuantity('');
       setDate(new Date());
       setTime(new Date());
-      Alert.alert('Sucesso', 'Abastecimento registrado com sucesso.');
+      Alert.alert('Sucesso', 'Abastecimento registrado com sucesso.', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack()
+        }
+      ]);
     }, 1200);
-  }
+  };
+
+  const handleSearch = () => {
+    setIsSearching(true);
+    // Implemente a lógica para buscar máquinas com base no searchQuery
+    setIsSearching(false);
+  };
 
   if (isLoadingMachines) {
-    return (
-      <Page title="Registrar Abastecimento">
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-          <ActivityIndicator size={32} color="#FFA000" />
-        </View>
-      </Page>
-    );
+    return <LoadingScreen />;
   }
 
   return (
-    <Page title="Registrar Abastecimento" subtitle="Preencha os dados para registrar um novo abastecimento">
-      <View style={styles.form}>
-        {/* Máquina */}
-        <Text style={styles.label}>Máquina</Text>
-        <View style={styles.selectBox}>
-          {machines.map((machine) => (
-            <TouchableOpacity
-              key={machine.id}
-              style={[styles.selectItem, selectedMachine === machine.id && styles.selectItemActive]}
-              onPress={() => setSelectedMachine(machine.id)}
-            >
-              <Text style={selectedMachine === machine.id ? styles.selectItemTextActive : styles.selectItemText}>
-                {machine.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Tipo de combustível */}
-        <Text style={styles.label}>Tipo de Combustível</Text>
-        <View style={styles.selectBox}>
-          {fuelTypes.map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.selectItem, selectedFuelType === type && styles.selectItemActive]}
-              onPress={() => setSelectedFuelType(type)}
-            >
-              <Text style={selectedFuelType === type ? styles.selectItemTextActive : styles.selectItemText}>
-                {type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Quantidade */}
-        <Text style={styles.label}>Quantidade (litros)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ex: 50.5"
-          keyboardType="numeric"
-          value={quantity}
-          onChangeText={setQuantity}
+    <Page subtitle="Registre um novo abastecimento">
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.container}
+      >
+        <SearchBar 
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSearch={handleSearch}
+          isSearching={isSearching}
+          placeholder="Pesquisar máquinas..."
         />
 
-        {/* Data */}
-        <Text style={styles.label}>Data</Text>
-        <TouchableOpacity
-          style={styles.input}
+        <PickerInput
+          label="Máquina"
+          value={selectedMachine}
+          onValueChange={setSelectedMachine}
+          items={machines}
+        />
+
+        <PickerInput
+          label="Tipo de Combustível"
+          value={selectedFuelType}
+          onValueChange={setSelectedFuelType}
+          items={FUEL_TYPES}
+        />
+
+        <TextInputField
+          label="Quantidade (litros)"
+          value={quantity}
+          onChangeText={setQuantity}
+          placeholder="Ex: 50.5"
+          keyboardType="numeric"
+        />
+
+        <DateTimeInput
+          label="Data"
+          value={date}
           onPress={() => setShowDatePicker(true)}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialIcons name="calendar-today" size={18} color="#888" style={{ marginRight: 8 }} />
-            <Text>{date.toLocaleDateString('pt-BR')}</Text>
-          </View>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(_, selected) => {
-              setShowDatePicker(false);
-              if (selected) setDate(selected);
-            }}
-          />
-        )}
+          icon={<MaterialIcons name="calendar-today" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />}
+          showPicker={showDatePicker}
+          onDateChange={handleDateChange}
+          mode="date"
+        />
 
-        {/* Hora */}
-        <Text style={styles.label}>Hora</Text>
-        <TouchableOpacity
-          style={styles.input}
+        <DateTimeInput
+          label="Hora"
+          value={time}
           onPress={() => setShowTimePicker(true)}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Feather name="clock" size={18} color="#888" style={{ marginRight: 8 }} />
-            <Text>{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-          </View>
-        </TouchableOpacity>
-        {showTimePicker && (
-          <DateTimePicker
-            value={time}
-            mode="time"
-            is24Hour={true}
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(_, selected) => {
-              setShowTimePicker(false);
-              if (selected) setTime(selected);
-            }}
-          />
-        )}
+          icon={<Feather name="clock" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />}
+          showPicker={showTimePicker}
+          onDateChange={handleTimeChange}
+          mode="time"
+        />
 
-        {/* Botão registrar */}
-        <TouchableOpacity
-          style={[styles.button, isLoading && { opacity: 0.7 }]}
+        <RegisterButton
           onPress={handleRegister}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size={20} color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Registrar Abastecimento</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          isLoading={isLoading}
+        />
+      </ScrollView>
     </Page>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
   form: {
     marginTop: 8,
   },
-  label: {
-    fontWeight: 'bold',
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
     marginBottom: 4,
-    marginTop: 12,
-    color: '#1a237e',
   },
-  selectBox: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    gap: 8,
-  },
-  selectItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
     borderRadius: 8,
-    backgroundColor: '#eee',
-    marginRight: 8,
+    backgroundColor: COLORS.inputBackground,
+    overflow: 'hidden',
   },
-  selectItemActive: {
-    backgroundColor: '#FFD600',
-  },
-  selectItemText: {
-    color: '#222',
-  },
-  selectItemTextActive: {
-    color: '#222',
-    fontWeight: 'bold',
+  picker: {
+    height: 50,
+    color: COLORS.text,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 10,
-    backgroundColor: '#fafafa',
-    marginBottom: 8,
+    backgroundColor: COLORS.inputBackground,
+    color: COLORS.text,
+  },
+  dateInput: {
+    backgroundColor: COLORS.inputBackground,
+  },
+  inputContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  dateText: {
+    color: COLORS.text,
   },
   button: {
-    backgroundColor: '#FFA000',
+    backgroundColor: COLORS.primary,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 18,
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   buttonText: {
-    color: '#fff',
+    color: COLORS.background,
     fontWeight: 'bold',
     fontSize: 16,
   },
